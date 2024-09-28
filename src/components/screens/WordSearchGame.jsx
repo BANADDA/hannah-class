@@ -1,5 +1,3 @@
-// WordSearchGame.js
-
 import { Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import HannahsStats from '../Stats/HannahsStats'; // Ensure correct import path
@@ -155,7 +153,9 @@ const WordSearchGame = () => {
     const [submitted, setSubmitted] = useState(false);
     const [starsEarned, setStarsEarned] = useState([0, 0, 0, 0, 0, 0]); // Stars for each level
     const [currentLevel, setCurrentLevel] = useState(1); // Levels 1 to 6
-    const [gameOver, setGameOver] = useState(false); // New state to track game completion
+    const [gameOver, setGameOver] = useState(false); // Track game completion
+    const [gameStarted, setGameStarted] = useState(false); // Track if the game has started
+    const [paused, setPaused] = useState(false); // Track if the game is paused
     const totalLevels = 6;
 
     // Get current word list and category based on level
@@ -164,44 +164,45 @@ const WordSearchGame = () => {
 
     // Initialize grid and reset states when level changes
     useEffect(() => {
-        if (currentLevel <= totalLevels) {
+        if (gameStarted && currentLevel <= totalLevels) {
             setGrid(generateGrid(10, currentWordList));
             setFoundWords([]); // Reset found words
             setTimeLeft(60); // Reset timer
             setSubmitted(false); // Reset submission state
             setSelection({ start: null, end: null }); // Reset selection
+            setPaused(false); // Ensure game is not paused
         }
-    }, [currentLevel, currentWordList]);
+    }, [currentLevel, currentWordList, gameStarted]);
 
     // Timer logic
     useEffect(() => {
-        if (timeLeft > 0 && !submitted && currentLevel <= totalLevels && !gameOver) {
+        if (gameStarted && timeLeft > 0 && !submitted && currentLevel <= totalLevels && !gameOver && !paused) {
             const timerId = setTimeout(() => {
                 setTimeLeft(timeLeft - 1);
             }, 1000);
             return () => clearTimeout(timerId);
-        } else if (timeLeft === 0 && !submitted && currentLevel <= totalLevels && !gameOver) {
+        } else if (timeLeft === 0 && !submitted && currentLevel <= totalLevels && !gameOver && gameStarted) {
             handleSubmit();
         }
-    }, [timeLeft, submitted, currentLevel, totalLevels, gameOver]);
+    }, [timeLeft, submitted, currentLevel, totalLevels, gameOver, paused, gameStarted]);
 
     // Handle mouse down event
     const handleMouseDown = (row, col) => {
-        if (submitted || currentLevel > totalLevels || gameOver) return;
+        if (submitted || currentLevel > totalLevels || gameOver || paused || !gameStarted) return;
         setIsSelecting(true);
         setSelection({ start: { row, col }, end: { row, col } });
     };
 
     // Handle mouse enter event
     const handleMouseEnter = (row, col) => {
-        if (isSelecting && !submitted && currentLevel <= totalLevels && !gameOver) {
+        if (isSelecting && !submitted && currentLevel <= totalLevels && !gameOver && !paused && gameStarted) {
             setSelection(prev => ({ ...prev, end: { row, col } }));
         }
     };
 
     // Handle mouse up event
     const handleMouseUp = () => {
-        if (submitted || currentLevel > totalLevels || gameOver) return;
+        if (submitted || currentLevel > totalLevels || gameOver || paused || !gameStarted) return;
         setIsSelecting(false);
         checkSelection();
     };
@@ -373,6 +374,18 @@ const WordSearchGame = () => {
         setStarsEarned([0, 0, 0, 0, 0, 0]);
         setCurrentLevel(1);
         setGameOver(false);
+        setGameStarted(false);
+        setFoundWords([]);
+    };
+
+    // Handle game start
+    const handleStartGame = () => {
+        setGameStarted(true);
+    };
+
+    // Handle pause and resume
+    const togglePause = () => {
+        setPaused(!paused);
     };
 
     return (
@@ -380,91 +393,115 @@ const WordSearchGame = () => {
             <header className="bg-white text-black text-center text-3xl font-bold">
                 Princess Puzzle
             </header>
-            <div className="flex flex-col items-center justify-center">
-                <Typography variant="body3" className="mb-2 py-5 italic font-semibold text-center max-w-lg">
-                    Hi Hannah 👋 words appear UP, DOWN, BACKWARDS, and DIAGONALLY. Use your cursor to highlight the search word in the puzzle.
-                </Typography>
-                {/* Dynamic Title Based on Current Category */}
-                {currentLevel <= totalLevels && (
-                    <Typography variant="h5" className="mb-4 underline pb-3">
-                        {currentCategory} Word Search
-                    </Typography>
-                )}
-                <div className="flex w-full max-w-6xl">
-                    {/* Left Column: Word Search Grid and Words List */}
-                    <div className="flex flex-col items-center w-1/2">
-                        {/* Header for Level and Words Found */}
-                        {currentLevel <= totalLevels && (
-                            <div className="w-full flex justify-between mb-2">
-                                <Typography variant="h6">Level {currentLevel}</Typography>
-                                <Typography variant="h6">Words Found: {foundWords.length} / {currentWordList.length}</Typography>
-                            </div>
-                        )}
-                        {/* Container for Grid and Words List */}
-                        {currentLevel <= totalLevels && (
-                            <div className="flex flex-row mt-4">
-                                {/* Word Search Grid */}
-                                <div className="grid grid-cols-10 gap-1">
-                                    {grid.map((row, rowIndex) =>
-                                        row.map((cell, colIndex) => (
-                                            <div
-                                                key={`${rowIndex}-${colIndex}`}
-                                                className={`w-8 h-8 p-0 text-sm font-bold flex items-center justify-center cursor-pointer select-none border border-gray-300 ${isFound(rowIndex, colIndex)
-                                                        ? 'bg-green-300'
-                                                        : isCurrentlySelected(rowIndex, colIndex)
-                                                            ? 'bg-yellow-300'
-                                                            : 'bg-gray-100'
-                                                    }`}
-                                                onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
-                                                onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
-                                                onMouseUp={handleMouseUp}
-                                            >
-                                                {cell}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                                {/* Words List */}
-                                <div className="ml-6">
-                                    {currentWordList.map((word, index) => (
-                                        <p
-                                            key={index}
-                                            className={`text-lg ${foundWords.some(fw => fw.word === word) ? 'line-through text-green-500' : ''}`}
-                                        >
-                                            {word}
-                                        </p>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    {/* Right Column: Hannah's Stats */}
-                    <div className="w-1/2 flex justify-center">
-                        <HannahsStats starsEarned={starsEarned} />
-                    </div>
-                </div>
-                {/* Submit Button and Timer */}
-                {currentLevel <= totalLevels && (
-                    <div className="mt-4 flex flex-col items-center">
+            <div className="flex flex-col items-center justify-center mt-4">
+                {!gameStarted && !gameOver && (
+                    <div className="flex flex-col items-center">
+                        <Typography variant="h5" className="mb-4 underline pb-3">
+                            Welcome to the Word Search Game!
+                        </Typography>
                         <button
-                            onClick={handleSubmit}
-                            disabled={submitted || currentLevel > totalLevels}
-                            className={`px-6 py-2 text-white rounded ${submitted || currentLevel > totalLevels
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-500 hover:bg-blue-600'
-                                }`}
+                            onClick={handleStartGame}
+                            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
                         >
-                            Submit
+                            Start Game
                         </button>
-                        <div className="mt-2 text-lg">
-                            Time Left: {timeLeft} second{timeLeft !== 1 ? 's' : ''}
-                        </div>
-                        {submitted && currentLevel <= totalLevels && (
-                            <div className="mt-2 text-xl font-semibold text-green-600">
-                                Level {currentLevel} Submitted!
-                            </div>
-                        )}
                     </div>
+                )}
+                {gameStarted && !gameOver && (
+                    <>
+                        <Typography variant="body3" className="mb-2 py-5 italic font-semibold text-center max-w-lg">
+                            Hi Hannah 👋 words appear UP, DOWN, BACKWARDS, and DIAGONALLY. Use your cursor to highlight the search word in the puzzle.
+                        </Typography>
+                        {/* Dynamic Title Based on Current Category */}
+                        <Typography variant="h5" className="mb-4 underline pb-3">
+                            {currentCategory} Word Search
+                        </Typography>
+                        <div className="flex w-full max-w-6xl">
+                            {/* Left Column: Word Search Grid and Words List */}
+                            <div className="flex flex-col items-center w-1/2">
+                                {/* Header for Level and Words Found */}
+                                <div className="w-full flex justify-between mb-2">
+                                    <Typography variant="h6">Level {currentLevel}</Typography>
+                                    <Typography variant="h6">Words Found: {foundWords.length} / {currentWordList.length}</Typography>
+                                </div>
+                                {/* Container for Grid and Words List */}
+                                <div className="flex flex-row mt-4">
+                                    {/* Word Search Grid */}
+                                    <div className="grid grid-cols-10 gap-1">
+                                        {grid.map((row, rowIndex) =>
+                                            row.map((cell, colIndex) => (
+                                                <div
+                                                    key={`${rowIndex}-${colIndex}`}
+                                                    className={`w-8 h-8 p-0 text-sm font-bold flex items-center justify-center cursor-pointer select-none border border-gray-300 ${
+                                                        isFound(rowIndex, colIndex)
+                                                            ? 'bg-green-300'
+                                                            : isCurrentlySelected(rowIndex, colIndex)
+                                                                ? 'bg-yellow-300'
+                                                                : 'bg-gray-100'
+                                                    }`}
+                                                    onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
+                                                    onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
+                                                    onMouseUp={handleMouseUp}
+                                                >
+                                                    {cell}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                    {/* Words List */}
+                                    <div className="ml-6">
+                                        {currentWordList.map((word, index) => (
+                                            <p
+                                                key={index}
+                                                className={`text-lg ${foundWords.some(fw => fw.word === word) ? 'line-through text-green-500' : ''}`}
+                                            >
+                                                {word}
+                                            </p>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Right Column: Hannah's Stats */}
+                            <div className="w-1/2 flex justify-center">
+                                <HannahsStats starsEarned={starsEarned} />
+                            </div>
+                        </div>
+                        {/* Controls: Submit, Pause/Resume */}
+                        <div className="mt-4 flex flex-col items-center">
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={submitted || currentLevel > totalLevels}
+                                    className={`px-6 py-2 text-white rounded ${submitted || currentLevel > totalLevels
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-blue-500 hover:bg-blue-600'
+                                        }`}
+                                >
+                                    Submit
+                                </button>
+                                <button
+                                    onClick={togglePause}
+                                    disabled={currentLevel > totalLevels}
+                                    className={`px-6 py-2 text-white rounded ${currentLevel > totalLevels
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : paused
+                                            ? 'bg-green-500 hover:bg-green-600'
+                                            : 'bg-yellow-500 hover:bg-yellow-600'
+                                        }`}
+                                >
+                                    {paused ? 'Resume' : 'Pause'}
+                                </button>
+                            </div>
+                            <div className="mt-2 text-lg">
+                                Time Left: {timeLeft} second{timeLeft !== 1 ? 's' : ''}
+                            </div>
+                            {submitted && currentLevel <= totalLevels && (
+                                <div className="mt-2 text-xl font-semibold text-green-600">
+                                    Level {currentLevel} Submitted!
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
                 {/* Final Completion Message */}
                 {gameOver && (

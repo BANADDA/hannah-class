@@ -105,9 +105,9 @@ const ClassmoWelcomeScreen = () => {
           <>
 
             <div className="p-8 pt-14">
-              <h1 className="text-3xl font-bold text-center mb-4">Welcome to Hannah's Classmo!</h1>
+              <h1 className="text-3xl font-bold text-center mb-4">Welcome to Hannah&apos;s Classmo!</h1>
               <p className="text-gray-600 text-center mb-8 text-lg">
-                Classmo is your fun math world where numbers are your friends, and learning is an adventure! Let's play, explore, and learn together!
+                Classmo is your fun math world where numbers are your friends, and learning is an adventure! Let&apos;s play, explore, and learn together!
               </p>
               <div className="space-y-4">
                 <button className="w-full py-3 px-6 bg-gray-100 text-gray-800 rounded-md flex items-center justify-between hover:bg-gray-200 transition-colors group">

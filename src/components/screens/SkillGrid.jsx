@@ -21,18 +21,25 @@ const skills = [
   { title: 'Measurement', icon: '📏', color: '#3399ff' },
 ];
 
-const SkillTile = ({ title, icon, color }) => {
+const SkillTile = ({ title, icon, color, onClick }) => {
   const lighterColor = lightenColor(color, 20); // Adjusted to 20% lighter
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
 
   return (
     <div className="flex flex-col items-center">
       <div
-        className="relative w-full h-36 rounded-lg shadow-md border-2 overflow-hidden group flex flex-col"
+        className="relative w-full h-36 rounded-lg shadow-md border-2 overflow-hidden group flex flex-col cursor-pointer"
         style={{
           borderColor: color,
           '--tile-color': color,
           '--tile-hover-color': lighterColor,
         }}
+        onClick={handleClick}
       >
         {/* Icon Section */}
         <div
@@ -67,16 +74,19 @@ const SkillTile = ({ title, icon, color }) => {
   );
 };
 
-const SkillGrid = () => {
+const SkillGrid = ({ onAdditionClick }) => {
   return (
     <div>
-      <header className="bg-white text-black text-center pb-3 pt-14 text-3xl font-bold">
+      <header className="bg-white text-black text-center pt-14 text-3xl font-bold">
         Practice Math Skills
       </header>
       <div className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-        {skills.map((skill, index) => (
-          <SkillTile key={index} {...skill} />
-        ))}
+        {skills.map((skill, index) => {
+          if (skill.title === 'Addition') {
+            return <SkillTile key={index} {...skill} onClick={onAdditionClick} />;
+          }
+          return <SkillTile key={index} {...skill} />;
+        })}
       </div>
     </div>
   );

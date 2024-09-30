@@ -51,7 +51,7 @@ const GameDashboard = ({ onMathQuestClick, onPuzzleQuestClick }) => {
   const games = [
     { title: 'Princess Puzzle', icon: '👸', color: '#ffcc99', starred: true, onClick: onPuzzleQuestClick }, // Word Search -> Princess Puzzle
     { title: 'Story Time', icon: '📚', color: '#ffcc66', starred: true, onClick: onMathQuestClick }, // Reading -> Story Time
-    { title: 'Count the Critters', icon: '🦅', color: '#ff9966', starred: true, onClick: onMathQuestClick }, // Counting -> Count the Critters
+    { title: "Writer's Club", icon: '🦅', color: '#ff9966', starred: true, onClick: onMathQuestClick }, // Counting -> Count the Critters
     { title: 'Math Quest', icon: '🛡️', color: '#cc6699', starred: true, onClick: onMathQuestClick }, // Quick Maths -> Math Quest
     { title: 'Homework Helper', icon: '✏️', color: '#99ccff', starred: true }, // Homework & Assessment -> Homework Helper
     { title: 'Royal Rankings', icon: '👑', color: '#ff99cc', starred: true, onClick: onMathQuestClick}, // Leader Board -> Royal Rankings (with a crown)

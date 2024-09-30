@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import GameDashboard from './GameOption'; // Import your GameDashboard component
 import SkillGrid from './SkillGrid';
 import WordSearchGame from './WordSearchGame';
+import AdditionPracticeScreen from './math/AdditionPracticeScreen';
 
 const ClassmoWelcomeScreen = () => {
   const [currentView, setCurrentView] = useState('home'); // Track which view to show
@@ -20,7 +21,15 @@ const ClassmoWelcomeScreen = () => {
   // Function to switch to Puzzle Quest
   const onPuzzleQuestClick = () => {
     setCurrentView('puzzlequest');
-  }
+  };
+
+  // Function to switch to Addition Practice
+  const onAdditionClick = () => {
+    console.log('====================================');
+    console.log("Clicked addition");
+    console.log('====================================');
+    setCurrentView('addition');
+  };
 
   // Function to return to the home screen
   const goToHome = () => {
@@ -51,7 +60,9 @@ const ClassmoWelcomeScreen = () => {
             <span className="cursor-pointer hover:text-black" onClick={onProceedToDashboard}>
               Games
             </span>{' > '}
-            <span className="text-gray-600">Math Quest</span>
+            <span className="cursor-pointer hover:text-black" onClick={onMathQuestClick}>
+              Math Quest
+            </span>
           </>
         )}
         {currentView === 'puzzlequest' && (
@@ -60,50 +71,60 @@ const ClassmoWelcomeScreen = () => {
             <span className="cursor-pointer hover:text-black" onClick={onProceedToDashboard}>
               Games
             </span>{' > '}
-            <span className="text-gray-600">Word Puzzle</span>
+            <span className="cursor-pointer hover:text-black" onClick={onPuzzleQuestClick}>
+              Word Puzzle
+            </span>
+          </>
+        )}
+        {currentView === 'addition' && (
+          <>
+            {' > '}
+            <span className="cursor-pointer hover:text-black" onClick={onProceedToDashboard}>
+              Games
+            </span>{' > '}
+            <span className="cursor-pointer hover:text-black" onClick={onMathQuestClick}>
+              Math Quest
+            </span>{' > '}
+            <span className="text-gray-600">Addition</span>
           </>
         )}
       </div>
 
       <div className="max-w-7xl w-full bg-white rounded-lg shadow-lg overflow-hidden">
-
-      
-          
-            {/* Main Welcome Screen */}
-            <div className="bg-yellow-300 flex justify-center items-end h-48">
-              <div className="relative">
-                <div className="absolute -top-28 left-1/2 transform -translate-x-1/2">
-                  <div className="w-32 h-16 bg-yellow-400 rounded-t-full"></div>
-                  <div className="w-32 h-20 bg-yellow-500 rounded-b-3xl relative">
-                    <div className="absolute top-3 left-3 w-6 h-6 bg-white rounded-full"></div>
-                    <div className="absolute top-3 right-3 w-6 h-6 bg-white rounded-full"></div>
-                    <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-10 h-3 bg-gray-700 rounded-full"></div>
-                  </div>
-                  {/* Left green icons */}
-                  <div className="absolute -left-10 -top-6 w-10 h-20 flex flex-col justify-between">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-5 bg-green-700"></div>
-                    </div>
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-5 bg-green-700"></div>
-                    </div>
-                  </div>
-                  {/* Right green icons */}
-                  <div className="absolute -right-10 -top-6 w-10 h-20 flex flex-col justify-between">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-5 bg-green-700"></div>
-                    </div>
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-5 bg-green-700"></div>
-                    </div>
-                  </div>
+        {/* Main Welcome Screen */}
+        <div className="bg-yellow-300 flex justify-center items-end h-48">
+          <div className="relative">
+            <div className="absolute -top-28 left-1/2 transform -translate-x-1/2">
+              <div className="w-32 h-16 bg-yellow-400 rounded-t-full"></div>
+              <div className="w-32 h-20 bg-yellow-500 rounded-b-3xl relative">
+                <div className="absolute top-3 left-3 w-6 h-6 bg-white rounded-full"></div>
+                <div className="absolute top-3 right-3 w-6 h-6 bg-white rounded-full"></div>
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-10 h-3 bg-gray-700 rounded-full"></div>
+              </div>
+              {/* Left green icons */}
+              <div className="absolute -left-10 -top-6 w-10 h-20 flex flex-col justify-between">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-1 h-5 bg-green-700"></div>
+                </div>
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-1 h-5 bg-green-700"></div>
+                </div>
+              </div>
+              {/* Right green icons */}
+              <div className="absolute -right-10 -top-6 w-10 h-20 flex flex-col justify-between">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-1 h-5 bg-green-700"></div>
+                </div>
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-1 h-5 bg-green-700"></div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
         {/* Conditional Rendering based on the current view */}
         {currentView === 'home' && (
           <>
-
             <div className="p-8 pt-14">
               <h1 className="text-3xl font-bold text-center mb-4">Welcome to Hannah&apos;s Classmo!</h1>
               <p className="text-gray-600 text-center mb-8 text-lg">
@@ -136,12 +157,17 @@ const ClassmoWelcomeScreen = () => {
         )}
 
         {currentView === 'dashboard' && (
-          <GameDashboard onMathQuestClick={onMathQuestClick} onPuzzleQuestClick={onPuzzleQuestClick}  />
+          <GameDashboard
+            onMathQuestClick={onMathQuestClick}
+            onPuzzleQuestClick={onPuzzleQuestClick}
+          />
         )}
 
-        {currentView === 'mathquest' && <SkillGrid />}
+        {currentView === 'mathquest' && <SkillGrid onAdditionClick={onAdditionClick} />}
+
         {currentView === 'puzzlequest' && <WordSearchGame />}
 
+        {currentView === 'addition' && <AdditionPracticeScreen />}
       </div>
     </div>
   );

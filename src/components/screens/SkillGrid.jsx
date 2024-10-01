@@ -1,77 +1,94 @@
 // SkillGrid.jsx
 
-import { Box, Button, Card, CardContent, CardHeader } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Tooltip,
+} from '@mui/material';
 import { Award, Calculator, Clock, Lock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import AdditionPracticeScreen from './math/AdditionPracticeScreen';
 
 const SkillCircle = ({ color, icon, name, progress, locked, onClick }) => (
-  <Box
-    sx={{
-      opacity: locked ? 0.7 : 1,
-      textAlign: 'center',
-      cursor: locked ? 'not-allowed' : 'pointer',
-    }}
-    onClick={locked ? null : onClick}
-  >
-    <Box sx={{ position: 'relative' }}>
-      <Box
-        sx={{
-          width: { xs: 48, sm: 56, md: 64 },
-          height: { xs: 48, sm: 56, md: 64 },
-          borderRadius: '50%',
-          backgroundColor: color,
-          mb: 1,
-          position: 'relative',
-        }}
-      >
+  <Tooltip title={name} arrow>
+    <Box
+      sx={{
+        opacity: locked ? 0.7 : 1,
+        textAlign: 'center',
+        cursor: locked ? 'not-allowed' : 'pointer',
+        transition: 'transform 0.2s ease-in-out',
+        '&:hover': {
+          transform: locked ? 'none' : 'scale(1.05)',
+        },
+      }}
+      onClick={locked ? null : onClick}
+    >
+      <Box sx={{ position: 'relative' }}>
         <Box
           sx={{
-            position: 'absolute',
-            inset: 0,
-            border: `4px solid ${color}`,
+            width: { xs: 48, sm: 56, md: 64 },
+            height: { xs: 48, sm: 56, md: 64 },
             borderRadius: '50%',
-            clipPath:
-              progress === 100
-                ? 'none'
-                : `polygon(50% 50%, -50% -50%, ${
-                    50 + Math.cos((progress / 100) * Math.PI * 2) * 100
-                  }% ${50 - Math.sin((progress / 100) * Math.PI * 2) * 100}%)`,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: { xs: 16, sm: 20, md: 24 },
+            backgroundColor: color,
+            mb: 1,
+            position: 'relative',
+            transition: 'box-shadow 0.2s ease-in-out',
+            '&:hover': {
+              boxShadow: locked ? 'none' : `0 0 10px ${color}`,
+            },
           }}
         >
-          {icon}
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              border: `4px solid ${color}`,
+              borderRadius: '50%',
+              clipPath:
+                progress === 100
+                  ? 'none'
+                  : `polygon(50% 50%, -50% -50%, ${
+                      50 + Math.cos((progress / 100) * Math.PI * 2) * 100
+                    }% ${50 - Math.sin((progress / 100) * Math.PI * 2) * 100}%)`,
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: { xs: 16, sm: 20, md: 24 },
+            }}
+          >
+            {icon}
+          </Box>
         </Box>
+        {locked && (
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'gray',
+              borderRadius: '50%',
+              p: 0.5,
+              border: '2px solid white',
+            }}
+          >
+            <Lock size={16} color="white" />
+          </Box>
+        )}
       </Box>
-      {locked && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: -10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'gray',
-            borderRadius: '50%',
-            p: 0.5,
-            border: '2px solid white',
-          }}
-        >
-          <Lock size={16} color="white" />
-        </Box>
-      )}
+      <Box sx={{ fontSize: 12, color: locked ? 'gray' : 'inherit' }}>{name}</Box>
     </Box>
-    <Box sx={{ fontSize: 12, color: locked ? 'gray' : 'inherit' }}>{name}</Box>
-  </Box>
+  </Tooltip>
 );
 
 const skillLevels = [
@@ -211,8 +228,7 @@ const SkillGrid = () => {
                     borderRadius: 1,
                     p: 1,
                     fontSize: 14,
-                    color:
-                      category.category === 'Basic' ? 'white' : '#333',
+                    color: category.category === 'Basic' ? 'white' : '#333',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

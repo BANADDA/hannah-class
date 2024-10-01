@@ -1,94 +1,409 @@
+// SkillGrid.jsx
+
+import { Box, Button, Card, CardContent, CardHeader } from '@mui/material';
+import { Award, Calculator, Clock, Lock } from 'lucide-react';
 import React from 'react';
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
-// Utility function to lighten a hex color
-const lightenColor = (color, percent) => {
-  const num = parseInt(color.slice(1), 16),
-    amt = Math.round(2.55 * percent),
-    R = Math.min(255, (num >> 16) + amt),
-    G = Math.min(255, ((num >> 8) & 0x00ff) + amt),
-    B = Math.min(255, (num & 0x0000ff) + amt);
+const SkillCircle = ({ color, icon, name, progress, locked, onClick }) => (
+  <Box
+    sx={{
+      opacity: locked ? 0.7 : 1,
+      textAlign: 'center',
+      cursor: locked ? 'not-allowed' : 'pointer',
+    }}
+    onClick={locked ? null : onClick}
+  >
+    <Box sx={{ position: 'relative' }}>
+      <Box
+        sx={{
+          width: { xs: 48, sm: 56, md: 64 },
+          height: { xs: 48, sm: 56, md: 64 },
+          borderRadius: '50%',
+          backgroundColor: color,
+          mb: 1,
+          position: 'relative',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            border: `4px solid ${color}`,
+            borderRadius: '50%',
+            clipPath:
+              progress === 100
+                ? 'none'
+                : `polygon(50% 50%, -50% -50%, ${
+                    50 + Math.cos((progress / 100) * Math.PI * 2) * 100
+                  }% ${50 - Math.sin((progress / 100) * Math.PI * 2) * 100}%)`,
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: { xs: 16, sm: 20, md: 24 },
+          }}
+        >
+          {icon}
+        </Box>
+      </Box>
+      {locked && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: -10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'gray',
+            borderRadius: '50%',
+            p: 0.5,
+            border: '2px solid white',
+          }}
+        >
+          <Lock size={16} color="white" />
+        </Box>
+      )}
+    </Box>
+    <Box sx={{ fontSize: 12, color: locked ? 'gray' : 'inherit' }}>{name}</Box>
+  </Box>
+);
 
-  return `#${(0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1)}`;
-};
-
-const skills = [
-  { title: 'Addition', icon: '➕', color: '#ff3366' },
-  { title: 'Subtraction', icon: '➖', color: '#ff6699' },
-  { title: 'Division', icon: '➗', color: '#ff9933' },
-  { title: 'Multiplication', icon: '✖️', color: '#00FFFF' },
-  { title: 'Counting', icon: '🔢', color: '#FFD700' },
-  { title: 'Comparison', icon: '⚖️', color: '#85e085' },
-  { title: 'Measurement', icon: '📏', color: '#3399ff' },
+const skillLevels = [
+  {
+    category: 'Basic',
+    checkpoint: true,
+    name: 'Basic Math Master',
+    levels: [
+      {
+        level: 1,
+        skills: [
+          { color: '#ff3366', icon: '➕', name: 'Addition', progress: 0, key: 'addition' },
+          { color: '#ff6699', icon: '➖', name: 'Subtraction', progress: 0, key: 'subtraction' },
+          { color: '#ff9933', icon: '➗', name: 'Division', progress: 0, key: 'division' },
+        ],
+      },
+      {
+        level: 2,
+        skills: [
+          { color: '#00FFFF', icon: '✖️', name: 'Multiplication', progress: 0, key: 'multiplication' },
+          { color: '#FFD700', icon: '🔢', name: 'Counting', progress: 0, key: 'counting' },
+          { color: '#85e085', icon: '⚖️', name: 'Comparison', progress: 0, key: 'comparison' },
+        ],
+      },
+      {
+        level: 3,
+        skills: [
+          { color: '#FFA500', icon: '📝', name: 'Assignment', progress: 0, key: 'assignment' },
+        ],
+      },
+    ],
+  },
+  {
+    category: 'Advanced',
+    checkpoint: true,
+    name: 'Advanced Math Master',
+    levels: [
+      {
+        level: 1,
+        skills: [
+          { color: '#6A5ACD', icon: '📏', name: 'Measurement', progress: 0, key: 'measurement' },
+          { color: '#FF69B4', icon: '🔢', name: 'Number Patterns', progress: 0, key: 'numberPatterns' },
+        ],
+      },
+      {
+        level: 2,
+        skills: [
+          { color: '#8B4513', icon: '📐', name: 'Geometry', progress: 0, key: 'geometry' },
+          { color: '#228B22', icon: '🧮', name: 'Problem Solving', progress: 0, key: 'problemSolving' },
+        ],
+      },
+      {
+        level: 3,
+        skills: [
+          { color: '#FFA500', icon: '📝', name: 'Assignment', progress: 0, key: 'advancedAssignment' },
+        ],
+      },
+    ],
+  },
 ];
 
-const SkillTile = ({ title, icon, color, onClick }) => {
-  const lighterColor = lightenColor(color, 20); // Adjusted to 20% lighter
+const chartData = [
+  { day: 'M', xp: 50 },
+  { day: 'T', xp: 80 },
+  { day: 'W', xp: 120 },
+  { day: 'Th', xp: 90 },
+  { day: 'F', xp: 100 },
+  { day: 'Sa', xp: 180 },
+  { day: 'Su', xp: 110 },
+];
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
+const achievements = [
+  { icon: '🎓', color: '#4caf50', name: 'Counting Champion' },
+  { icon: '🏆', color: '#ffeb3b', name: 'Shape Master' },
+  { icon: '⭐', color: '#2196f3', name: 'Color Expert' },
+  { icon: '🎯', color: '#9c27b0', name: 'Quick Counter' },
+  { icon: '🏅', color: '#ff9800', name: '7-Day Streak' },
+];
+
+const SkillGrid = ({
+  onAdditionClick,
+  onSubtractionClick,
+  onDivisionClick,
+  onMultiplicationClick,
+  onCountingClick,
+  onComparisonClick,
+  onAssignmentClick,
+  // ... other click handlers
+}) => {
+  const handleSkillClick = (skill) => {
+    if (skill.locked) return;
+    // Call the appropriate click handler based on the skill key
+    switch (skill.key) {
+      case 'addition':
+        onAdditionClick && onAdditionClick();
+        break;
+      case 'subtraction':
+        onSubtractionClick && onSubtractionClick();
+        break;
+      case 'division':
+        onDivisionClick && onDivisionClick();
+        break;
+      case 'multiplication':
+        onMultiplicationClick && onMultiplicationClick();
+        break;
+      case 'counting':
+        onCountingClick && onCountingClick();
+        break;
+      case 'comparison':
+        onComparisonClick && onComparisonClick();
+        break;
+      case 'assignment':
+        onAssignmentClick && onAssignmentClick();
+        break;
+      // ... handle other skills
+      default:
+        break;
     }
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div
-        className="relative w-full h-36 rounded-lg shadow-md border-2 overflow-hidden group flex flex-col cursor-pointer"
-        style={{
-          borderColor: color,
-          '--tile-color': color,
-          '--tile-hover-color': lighterColor,
-        }}
-        onClick={handleClick}
-      >
-        {/* Icon Section */}
-        <div
-          className="flex justify-center items-center flex-[2]"
-          style={{ backgroundColor: color }}
-        >
-          <div className="text-white text-4xl md:text-5xl">{icon}</div>
-        </div>
-        {/* Bottom Section */}
-        <div
-          className="flex justify-center items-center text-center bg-white flex-1 transition-colors duration-300"
-          style={{
-            backgroundColor: 'white',
+    <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 2, pt: 4 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+        <Box
+          sx={{
+            flex: 3,
+            position: 'relative',
+            mr: { md: 2 },
+            mb: { xs: 2, md: 0 },
           }}
         >
-          <span className="text-gray-800 text-lg font-semibold">{title}</span>
-        </div>
-        {/* Hover Overlay */}
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{ backgroundColor: 'transparent' }}
-        >
-          <div
-            className="absolute bottom-0 w-full h-1/3 flex justify-center items-center"
-            style={{ backgroundColor: lighterColor }}
-          >
-            <span className="text-white text-lg font-semibold">{title}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+          {/* Tree layout */}
+          <Box sx={{ position: 'relative', pt: 2 }}>
+            {skillLevels.map((category, categoryIndex) => (
+              <Box key={categoryIndex}>
+                {/* Category Checkpoint at the Start */}
+                <Box
+                  sx={{
+                    backgroundColor:
+                      category.category === 'Basic' ? '#4caf50' : '#ccc',
+                    borderRadius: 1,
+                    p: 1,
+                    fontSize: 14,
+                    color:
+                      category.category === 'Basic' ? 'white' : '#333',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Award style={{ width: 20, height: 20, marginRight: 8 }} />
+                  {category.name}
+                </Box>
 
-const SkillGrid = ({ onAdditionClick }) => {
-  return (
-    <div>
-      <header className="bg-white text-black text-center pt-14 text-3xl font-bold">
-        Practice Math Skills
-      </header>
-      <div className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-        {skills.map((skill, index) => {
-          if (skill.title === 'Addition') {
-            return <SkillTile key={index} {...skill} onClick={onAdditionClick} />;
-          }
-          return <SkillTile key={index} {...skill} />;
-        })}
-      </div>
-    </div>
+                {category.levels.map((level, levelIndex) => (
+                  <Box key={levelIndex}>
+                    {/* Level Label at the Start */}
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        mb: 1,
+                      }}
+                    >
+                      {category.category} Level {level.level}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        mb: { xs: 4, md: 5 },
+                        position: 'relative',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: { xs: 2, sm: 4, md: 8 },
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {level.skills.map((skill, skillIndex) => {
+                          // Determine if the skill is locked
+                          let isLocked = true;
+                          if (category.category === 'Basic') {
+                            if (skill.name === 'Addition') {
+                              isLocked = false; // Unlock Addition
+                            } else {
+                              isLocked = true; // Lock other skills
+                            }
+                          } else {
+                            isLocked = true; // Lock all Advanced skills
+                          }
+
+                          return (
+                            <SkillCircle
+                              key={skillIndex}
+                              {...skill}
+                              locked={isLocked}
+                              onClick={() =>
+                                handleSkillClick({ ...skill, locked: isLocked })
+                              }
+                            />
+                          );
+                        })}
+                      </Box>
+                      {/* Connectors */}
+                      {levelIndex < category.levels.length - 1 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            width: 2,
+                            height: { xs: 20, md: 40 },
+                            backgroundColor: '#ccc',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Card sx={{ mb: 2 }}>
+            <CardContent sx={{ pt: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ mb: { xs: 2, sm: 0 } }}>
+                  <Box sx={{ fontSize: 32, fontWeight: 'bold', color: '#FF9900' }}>
+                    157
+                  </Box>
+                  <Box sx={{ fontSize: 14, color: '#888' }}>Math Points</Box>
+                </Box>
+                <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                  <Box sx={{ fontSize: 14, fontWeight: 500 }}>Level 1</Box>
+                  <Box sx={{ fontSize: 12, color: '#888' }}>Beginner Mathematician</Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: 14,
+                      color: '#888',
+                      mt: 1,
+                    }}
+                  >
+                    <Clock style={{ width: 16, height: 16, marginRight: 4 }} />
+                    15 mins practiced today
+                  </Box>
+                </Box>
+              </Box>
+              <Box sx={{ height: 128 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} />
+                    <YAxis hide={true} />
+                    <Line
+                      type="monotone"
+                      dataKey="xp"
+                      stroke="#FF9900"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ width: '100%', mt: 2 }}
+                startIcon={<Calculator style={{ width: 16, height: 16 }} />}
+              >
+                Start Math Practice
+              </Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader
+              title="Achievements"
+              action={
+                <Button variant="text" size="small" sx={{ color: 'blue' }}>
+                  View all
+                </Button>
+              }
+            />
+            <CardContent>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {achievements.map((achievement, index) => (
+                  <Box
+                    key={index}
+                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                  >
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 1,
+                        backgroundColor: achievement.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: 24,
+                        mb: 1,
+                      }}
+                    >
+                      {achievement.icon}
+                    </Box>
+                    <Box sx={{ fontSize: 12, color: '#888', textAlign: 'center' }}>
+                      {achievement.name}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

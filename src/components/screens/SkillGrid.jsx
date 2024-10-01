@@ -10,86 +10,110 @@ import {
 } from '@mui/material';
 import { Award, Calculator, Clock, Lock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import useSound from 'use-sound';
 import AdditionPracticeScreen from './math/AdditionPracticeScreen';
 
-const SkillCircle = ({ color, icon, name, progress, locked, onClick }) => (
-  <Tooltip title={name} arrow>
-    <Box
-      sx={{
-        opacity: locked ? 0.7 : 1,
-        textAlign: 'center',
-        cursor: locked ? 'not-allowed' : 'pointer',
-        transition: 'transform 0.2s ease-in-out',
-        '&:hover': {
-          transform: locked ? 'none' : 'scale(1.05)',
-        },
-      }}
-      onClick={locked ? null : onClick}
-    >
-      <Box sx={{ position: 'relative' }}>
-        <Box
-          sx={{
-            width: { xs: 48, sm: 56, md: 64 },
-            height: { xs: 48, sm: 56, md: 64 },
-            borderRadius: '50%',
-            backgroundColor: color,
-            mb: 1,
-            position: 'relative',
-            transition: 'box-shadow 0.2s ease-in-out',
-            '&:hover': {
-              boxShadow: locked ? 'none' : `0 0 10px ${color}`,
-            },
-          }}
-        >
+// Sound file URLs
+const hoverSoundUrl = '/sounds/hover-sound.mp3';
+const navigateSoundUrl = '/sounds/navigate.wav';
+
+const SkillCircle = ({ color, icon, name, progress, locked, onClick }) => {
+  const [playHover] = useSound(hoverSoundUrl, { volume: 0.5 });
+
+  const handleMouseEnter = () => {
+    if (!locked) {
+      playHover();
+    }
+  };
+
+  return (
+    <Tooltip title={name} arrow>
+      <Box
+        sx={{
+          opacity: locked ? 0.7 : 1,
+          textAlign: 'center',
+          cursor: locked ? 'not-allowed' : 'pointer',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: locked ? 'none' : 'scale(1.05)',
+          },
+        }}
+        onClick={locked ? null : onClick}
+        onMouseEnter={handleMouseEnter}
+      >
+        <Box sx={{ position: 'relative' }}>
           <Box
             sx={{
-              position: 'absolute',
-              inset: 0,
-              border: `4px solid ${color}`,
+              width: { xs: 48, sm: 56, md: 64 },
+              height: { xs: 48, sm: 56, md: 64 },
               borderRadius: '50%',
-              clipPath:
-                progress === 100
-                  ? 'none'
-                  : `polygon(50% 50%, -50% -50%, ${
-                      50 + Math.cos((progress / 100) * Math.PI * 2) * 100
-                    }% ${50 - Math.sin((progress / 100) * Math.PI * 2) * 100}%)`,
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: { xs: 16, sm: 20, md: 24 },
+              backgroundColor: color,
+              mb: 1,
+              position: 'relative',
+              transition: 'box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                boxShadow: locked ? 'none' : `0 0 10px ${color}`,
+              },
             }}
           >
-            {icon}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                border: `4px solid ${color}`,
+                borderRadius: '50%',
+                clipPath:
+                  progress === 100
+                    ? 'none'
+                    : `polygon(50% 50%, -50% -50%, ${
+                        50 + Math.cos((progress / 100) * Math.PI * 2) * 100
+                      }% ${50 - Math.sin((progress / 100) * Math.PI * 2) * 100}%)`,
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: { xs: 16, sm: 20, md: 24 },
+              }}
+            >
+              {icon}
+            </Box>
           </Box>
+          {locked && (
+            <Box
+              sx={{
+                position: 'absolute',
+                right: -10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: 'gray',
+                borderRadius: '50%',
+                p: 0.5,
+                border: '2px solid white',
+              }}
+            >
+              <Lock size={16} color="white" />
+            </Box>
+          )}
         </Box>
-        {locked && (
-          <Box
-            sx={{
-              position: 'absolute',
-              right: -10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              backgroundColor: 'gray',
-              borderRadius: '50%',
-              p: 0.5,
-              border: '2px solid white',
-            }}
-          >
-            <Lock size={16} color="white" />
-          </Box>
-        )}
+        <Box sx={{ fontSize: 12, color: locked ? 'gray' : 'inherit' }}>
+          {name}
+        </Box>
       </Box>
-      <Box sx={{ fontSize: 12, color: locked ? 'gray' : 'inherit' }}>{name}</Box>
-    </Box>
-  </Tooltip>
-);
+    </Tooltip>
+  );
+};
 
 const skillLevels = [
   {
@@ -100,23 +124,65 @@ const skillLevels = [
       {
         level: 1,
         skills: [
-          { color: '#ff3366', icon: '➕', name: 'Addition', progress: 0, key: 'addition' },
-          { color: '#ff6699', icon: '➖', name: 'Subtraction', progress: 0, key: 'subtraction' },
-          { color: '#ff9933', icon: '➗', name: 'Division', progress: 0, key: 'division' },
+          {
+            color: '#ff3366',
+            icon: '➕',
+            name: 'Addition',
+            progress: 0,
+            key: 'addition',
+          },
+          {
+            color: '#ff6699',
+            icon: '➖',
+            name: 'Subtraction',
+            progress: 0,
+            key: 'subtraction',
+          },
+          {
+            color: '#ff9933',
+            icon: '➗',
+            name: 'Division',
+            progress: 0,
+            key: 'division',
+          },
         ],
       },
       {
         level: 2,
         skills: [
-          { color: '#00FFFF', icon: '✖️', name: 'Multiplication', progress: 0, key: 'multiplication' },
-          { color: '#FFD700', icon: '🔢', name: 'Counting', progress: 0, key: 'counting' },
-          { color: '#85e085', icon: '⚖️', name: 'Comparison', progress: 0, key: 'comparison' },
+          {
+            color: '#00FFFF',
+            icon: '✖️',
+            name: 'Multiplication',
+            progress: 0,
+            key: 'multiplication',
+          },
+          {
+            color: '#FFD700',
+            icon: '🔢',
+            name: 'Counting',
+            progress: 0,
+            key: 'counting',
+          },
+          {
+            color: '#85e085',
+            icon: '⚖️',
+            name: 'Comparison',
+            progress: 0,
+            key: 'comparison',
+          },
         ],
       },
       {
         level: 3,
         skills: [
-          { color: '#FFA500', icon: '📝', name: 'Assignment', progress: 0, key: 'assignment' },
+          {
+            color: '#FFA500',
+            icon: '📝',
+            name: 'Assignment',
+            progress: 0,
+            key: 'assignment',
+          },
         ],
       },
     ],
@@ -129,21 +195,51 @@ const skillLevels = [
       {
         level: 1,
         skills: [
-          { color: '#6A5ACD', icon: '📏', name: 'Measurement', progress: 0, key: 'measurement' },
-          { color: '#FF69B4', icon: '🔢', name: 'Number Patterns', progress: 0, key: 'numberPatterns' },
+          {
+            color: '#6A5ACD',
+            icon: '📏',
+            name: 'Measurement',
+            progress: 0,
+            key: 'measurement',
+          },
+          {
+            color: '#FF69B4',
+            icon: '🔢',
+            name: 'Number Patterns',
+            progress: 0,
+            key: 'numberPatterns',
+          },
         ],
       },
       {
         level: 2,
         skills: [
-          { color: '#8B4513', icon: '📐', name: 'Geometry', progress: 0, key: 'geometry' },
-          { color: '#228B22', icon: '🧮', name: 'Problem Solving', progress: 0, key: 'problemSolving' },
+          {
+            color: '#8B4513',
+            icon: '📐',
+            name: 'Geometry',
+            progress: 0,
+            key: 'geometry',
+          },
+          {
+            color: '#228B22',
+            icon: '🧮',
+            name: 'Problem Solving',
+            progress: 0,
+            key: 'problemSolving',
+          },
         ],
       },
       {
         level: 3,
         skills: [
-          { color: '#FFA500', icon: '📝', name: 'Assignment', progress: 0, key: 'advancedAssignment' },
+          {
+            color: '#FFA500',
+            icon: '📝',
+            name: 'Assignment',
+            progress: 0,
+            key: 'advancedAssignment',
+          },
         ],
       },
     ],
@@ -172,6 +268,9 @@ const SkillGrid = () => {
   const [currentSkill, setCurrentSkill] = useState(null);
   const [overallProgress, setOverallProgress] = useState({});
 
+  // Load the navigate sound
+  const [playNavigate] = useSound(navigateSoundUrl, { volume: 0.5 });
+
   useEffect(() => {
     // Load overall progress from localStorage
     const storedProgress = localStorage.getItem('overallProgress');
@@ -182,6 +281,10 @@ const SkillGrid = () => {
 
   const handleSkillClick = (skill) => {
     if (skill.locked) return;
+
+    // Play navigate sound
+    playNavigate();
+
     // Handle skill click
     switch (skill.key) {
       case 'addition':
@@ -198,6 +301,9 @@ const SkillGrid = () => {
     const updatedProgress = { ...overallProgress, additionCompleted: true };
     localStorage.setItem('overallProgress', JSON.stringify(updatedProgress));
     setOverallProgress(updatedProgress);
+
+    // Play navigate sound when returning to SkillGrid
+    playNavigate();
 
     // Return to SkillGrid
     setCurrentSkill(null);
@@ -291,7 +397,10 @@ const SkillGrid = () => {
                               {...skill}
                               locked={isLocked}
                               onClick={() =>
-                                handleSkillClick({ ...skill, locked: isLocked })
+                                handleSkillClick({
+                                  ...skill,
+                                  locked: isLocked,
+                                })
                               }
                             />
                           );
@@ -330,14 +439,24 @@ const SkillGrid = () => {
                 }}
               >
                 <Box sx={{ mb: { xs: 2, sm: 0 } }}>
-                  <Box sx={{ fontSize: 32, fontWeight: 'bold', color: '#FF9900' }}>
+                  <Box
+                    sx={{
+                      fontSize: 32,
+                      fontWeight: 'bold',
+                      color: '#FF9900',
+                    }}
+                  >
                     157
                   </Box>
-                  <Box sx={{ fontSize: 14, color: '#888' }}>Math Points</Box>
+                  <Box sx={{ fontSize: 14, color: '#888' }}>
+                    Math Points
+                  </Box>
                 </Box>
                 <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                   <Box sx={{ fontSize: 14, fontWeight: 500 }}>Level 1</Box>
-                  <Box sx={{ fontSize: 12, color: '#888' }}>Beginner Mathematician</Box>
+                  <Box sx={{ fontSize: 12, color: '#888' }}>
+                    Beginner Mathematician
+                  </Box>
                   <Box
                     sx={{
                       display: 'flex',
@@ -347,7 +466,9 @@ const SkillGrid = () => {
                       mt: 1,
                     }}
                   >
-                    <Clock style={{ width: 16, height: 16, marginRight: 4 }} />
+                    <Clock
+                      style={{ width: 16, height: 16, marginRight: 4 }}
+                    />
                     15 mins practiced today
                   </Box>
                 </Box>
@@ -391,7 +512,11 @@ const SkillGrid = () => {
                 {achievements.map((achievement, index) => (
                   <Box
                     key={index}
-                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}
                   >
                     <Box
                       sx={{
@@ -409,7 +534,13 @@ const SkillGrid = () => {
                     >
                       {achievement.icon}
                     </Box>
-                    <Box sx={{ fontSize: 12, color: '#888', textAlign: 'center' }}>
+                    <Box
+                      sx={{
+                        fontSize: 12,
+                        color: '#888',
+                        textAlign: 'center',
+                      }}
+                    >
                       {achievement.name}
                     </Box>
                   </Box>

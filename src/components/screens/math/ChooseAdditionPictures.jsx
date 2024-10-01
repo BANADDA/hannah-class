@@ -1,6 +1,9 @@
+// ChooseAdditionPictures.jsx
+
 import { Button } from '@mui/material';
 import { ArrowLeft, CheckCircle, Star, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import useSound from 'use-sound';
 
 const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) => {
   const TOTAL_LEVELS = 5; // Total number of levels
@@ -14,6 +17,16 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
   const [isCorrect, setIsCorrect] = useState(null);
   const [showNextButton, setShowNextButton] = useState(false); // To show "Next" button
   const [correctLevels, setCorrectLevels] = useState(initialState.correctLevels || 0); // Tracks number of correct levels
+
+  // Import sounds
+  const correctSoundUrl = '/sounds/correct_answer.wav';
+  const wrongSoundUrl = '/sounds/wrong_answer.wav';
+  const gameCompletedSoundUrl = '/sounds/game_completed.mp3';
+
+  // Load sounds using useSound
+  const [playCorrectSound] = useSound(correctSoundUrl, { volume: 0.5 });
+  const [playWrongSound] = useSound(wrongSoundUrl, { volume: 0.5 });
+  const [playGameCompletedSound] = useSound(gameCompletedSoundUrl, { volume: 0.5 });
 
   const emojis = {
     apple: '🍎',
@@ -67,6 +80,8 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
       setShowNextButton(false);
     } else {
       setGameCompleted(true);
+      // Play game completed sound
+      playGameCompletedSound();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLevel]);
@@ -94,6 +109,8 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
       setFeedbackMessage('Super!');
       setStars((prev) => prev + 1);
       setCorrectLevels((prev) => prev + 1); // Increase correct levels count
+      // Play correct answer sound
+      playCorrectSound();
       // Automatically proceed to next level after a short delay
       setTimeout(() => {
         setShowFeedback(false);
@@ -101,12 +118,16 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
           setCurrentLevel((prev) => prev + 1);
         } else {
           setGameCompleted(true);
+          // Play game completed sound
+          playGameCompletedSound();
         }
       }, 1000); // 1-second delay
     } else {
       setFeedbackMessage('Incorrect! Here is the correct answer.');
       // Highlight the correct option and show "Next" button
       setShowNextButton(true);
+      // Play wrong answer sound
+      playWrongSound();
     }
   };
 
@@ -118,6 +139,8 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
       setCurrentLevel((prev) => prev + 1);
     } else {
       setGameCompleted(true);
+      // Play game completed sound
+      playGameCompletedSound();
     }
   };
 

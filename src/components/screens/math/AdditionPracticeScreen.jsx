@@ -3,12 +3,19 @@
 import { Card, CardContent } from '@mui/material';
 import { Smartphone } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import useSound from 'use-sound';
 import AdditionWithPictures from './AdditionWithPictures'; // Import your practice components
 import ChooseAdditionPictures from './ChooseAdditionPictures';
 
 const AdditionPracticeScreen = ({ onCompletion }) => {
   const [selectedPractice, setSelectedPractice] = useState(null);
   const [practiceStates, setPracticeStates] = useState({});
+
+  // Sound file URL
+  const openPracticeSoundUrl = '/sounds/open_practice.mp3';
+
+  // Load the open practice sound
+  const [playOpenPractice] = useSound(openPracticeSoundUrl, { volume: 0.5 });
 
   // Practices with unique IDs
   const practices = [
@@ -51,6 +58,9 @@ const AdditionPracticeScreen = ({ onCompletion }) => {
 
   const handlePracticeClick = (practice) => {
     if (practice.hasApp) {
+      // Play open practice sound
+      playOpenPractice();
+
       setSelectedPractice(practice);
     } else {
       alert('This practice is coming soon!');

@@ -1,8 +1,9 @@
 // AdditionWithPictures.jsx
 
 import { Button, Input } from '@mui/material';
-import { ArrowLeft, CheckCircle, Edit3, RefreshCw, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle, RefreshCw, Star, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import useSound from 'use-sound';
 
 const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
   const TOTAL_LEVELS = 5; // Total number of levels
@@ -17,9 +18,22 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
     initialState.currentAddition || { left: 0, right: 0, picture: '' }
   );
 
+  // Import sounds
+  const correctSoundUrl = '/sounds/correct_answer.wav';
+  const incorrectSoundUrl = '/sounds/wrong_answer.wav';
+  const completionSoundUrl = '/sounds/game_completed.mp3';
+
+  const [playCorrectSound] = useSound(correctSoundUrl, { volume: 0.5 });
+  const [playIncorrectSound] = useSound(incorrectSoundUrl, { volume: 0.5 });
+  const [playCompletionSound] = useSound(completionSoundUrl, { volume: 0.5 });
+
   useEffect(() => {
     if (currentLevel <= TOTAL_LEVELS) {
       generateNewAddition();
+    } else {
+      setGameCompleted(true);
+      // Play completion sound
+      playCompletionSound();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLevel]);
@@ -40,7 +54,7 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
 
   const generateNewAddition = () => {
     const left = Math.floor(Math.random() * 5) + 1;
-    const right = Math.floor(Math.random() * (6 - left)) + 1;
+    const right = Math.floor(Math.random() * 5) + 1;
     const pictureIndex = Math.floor(Math.random() * pictures.length);
     setCurrentAddition({ left, right, picture: pictures[pictureIndex] });
     setIsCorrect(null); // Reset correctness indicator for new question
@@ -52,15 +66,27 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
     setIsCorrect(correct);
 
     if (correct) {
-      setStars(prev => prev + 1);
-      if (currentLevel < TOTAL_LEVELS) {
-        setCurrentLevel(prev => prev + 1);
-      } else {
-        setGameCompleted(true);
-      }
+      setStars((prev) => prev + 1);
+      // Play correct answer sound
+      playCorrectSound();
+    } else {
+      // Play incorrect answer sound
+      playIncorrectSound();
     }
 
-    setUserAnswer('');
+    // Disable input and button
+    // Move to next level after a short delay
+    setTimeout(() => {
+      if (currentLevel < TOTAL_LEVELS) {
+        setCurrentLevel((prev) => prev + 1);
+      } else {
+        setGameCompleted(true);
+        // Play completion sound
+        playCompletionSound();
+      }
+      setUserAnswer('');
+      setIsCorrect(null);
+    }, 2000); // 2 seconds delay
   };
 
   const handleRetry = () => {
@@ -87,15 +113,6 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
           </Button>
           <h1 className="text-2xl font-bold">Addition with Pictures</h1>
         </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="outlined"
-            className="flex items-center justify-center"
-            aria-label="Edit"
-          >
-            <Edit3 className="w-5 h-5" />
-          </Button>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -105,30 +122,33 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
             <h2 className="text-xl text-blue-500">Level {currentLevel}</h2>
           </div>
 
-          <div className="bg-pink-100 p-4 rounded-lg mb-4 flex items-center justify-center space-x-4">
-            {[...Array(currentAddition.left)].map((_, i) => (
-              <span key={`left-${i}`} className="text-3xl">
-                {currentAddition.picture}
-              </span>
-            ))}
-            <span className="text-3xl">+</span>
-            {[...Array(currentAddition.right)].map((_, i) => (
-              <span key={`right-${i}`} className="text-3xl">
-                {currentAddition.picture}
-              </span>
-            ))}
-            <span className="text-3xl">=</span>
+          <div className="bg-pink-100 p-4 rounded-lg mb-4 flex flex-col items-center justify-center space-y-4">
+            <div className="flex flex-wrap justify-center items-center">
+              {[...Array(currentAddition.left)].map((_, i) => (
+                <span key={`left-${i}`} className="text-4xl m-1">
+                  {currentAddition.picture}
+                </span>
+              ))}
+              <span className="text-4xl font-bold mx-2">+</span>
+              {[...Array(currentAddition.right)].map((_, i) => (
+                <span key={`right-${i}`} className="text-4xl m-1">
+                  {currentAddition.picture}
+                </span>
+              ))}
+              <span className="text-4xl font-bold mx-2">=</span>
+            </div>
             <Input
               type="number"
               value={userAnswer}
-              onChange={e => setUserAnswer(e.target.value)}
-              className="w-20 text-center"
-              onKeyPress={e => {
-                if (e.key === 'Enter') {
+              onChange={(e) => setUserAnswer(e.target.value)}
+              className="w-24 text-center"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && userAnswer.trim() !== '') {
                   handleSubmit();
                 }
               }}
               aria-label="Your Answer"
+              disabled={isCorrect !== null}
             />
           </div>
 
@@ -138,11 +158,20 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
                 isCorrect ? 'text-green-500' : 'text-red-500'
               }`}
             >
-              {isCorrect
-                ? 'Correct! 🎉'
-                : `Incorrect. The correct answer was ${
-                    currentAddition.left + currentAddition.right
-                  }.`}
+              {isCorrect ? (
+                <div className="flex flex-col items-center">
+                  <CheckCircle className="w-16 h-16 mb-2" />
+                  <p className="text-2xl font-bold">Correct! 🎉</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <XCircle className="w-16 h-16 mb-2" />
+                  <p className="text-2xl font-bold">
+                    Incorrect. The correct answer was{' '}
+                    {currentAddition.left + currentAddition.right}.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -151,24 +180,28 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
               onClick={handleSubmit}
               variant="contained"
               color="primary"
-              disabled={userAnswer.trim() === ''}
+              disabled={userAnswer.trim() === '' || isCorrect !== null}
             >
-              Answer
+              Submit
             </Button>
           </div>
 
           {/* Star Ratings Row */}
           <div className="flex justify-between items-center mt-4">
-            <div>Level {currentLevel} of {TOTAL_LEVELS}</div>
-            <div className="flex space-x-1"> {/* Ensures stars are in a single row with spacing */}
+            <div className="text-lg font-medium">
+              Level {currentLevel} of {TOTAL_LEVELS}
+            </div>
+            <div className="flex space-x-1">
+              {/* Ensures stars are in a single row with spacing */}
               {[...Array(TOTAL_LEVELS)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`text-2xl ${i < stars ? 'text-yellow-400' : 'text-gray-300'}`}
+                  className={`text-2xl ${
+                    i < stars ? 'text-yellow-400' : 'text-gray-300'
+                  }`}
                 />
               ))}
             </div>
-            <div className="w-8 h-8 bg-green-500 rounded-md"></div>
           </div>
         </>
       ) : (
@@ -177,28 +210,36 @@ const AdditionWithPictures = ({ onBack, initialState = {}, onStateChange }) => {
           <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
           <h2 className="text-3xl font-bold text-green-600 mb-2">Congratulations! 🎉</h2>
           <p className="text-xl mb-4">
-            You completed all {TOTAL_LEVELS} levels with {stars}{' '}
-            {stars === 1 ? 'star' : 'stars'}!
+            You completed all {TOTAL_LEVELS} levels with {stars} {stars === 1 ? 'star' : 'stars'}!
           </p>
           <div className="flex items-center space-x-1 mb-4">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(TOTAL_LEVELS)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-6 h-6 ${
-                  i < stars ? 'text-yellow-400' : 'text-gray-300'
-                }`}
+                className={`w-6 h-6 ${i < stars ? 'text-yellow-400' : 'text-gray-300'}`}
               />
             ))}
           </div>
-          <Button
-            onClick={handleRetry}
-            variant="contained"
-            color="primary"
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className="w-5 h-5" />
-            <span>Try Again</span>
-          </Button>
+          <div className="flex space-x-4">
+            <Button
+              onClick={handleRetry}
+              variant="contained"
+              color="primary"
+              className="flex items-center space-x-2"
+            >
+              <RefreshCw className="w-5 h-5" />
+              <span>Try Again</span>
+            </Button>
+            <Button
+              onClick={onBack}
+              variant="contained"
+              color="secondary"
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Return to Board</span>
+            </Button>
+          </div>
         </div>
       )}
     </div>

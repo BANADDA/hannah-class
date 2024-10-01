@@ -2,8 +2,9 @@
 
 import { Box, Button, Card, CardContent, CardHeader } from '@mui/material';
 import { Award, Calculator, Clock, Lock } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import AdditionPracticeScreen from './math/AdditionPracticeScreen';
 
 const SkillCircle = ({ color, icon, name, progress, locked, onClick }) => (
   <Box
@@ -150,48 +151,44 @@ const achievements = [
   { icon: '🏅', color: '#ff9800', name: '7-Day Streak' },
 ];
 
-const SkillGrid = ({
-  onAdditionClick,
-  onSubtractionClick,
-  onDivisionClick,
-  onMultiplicationClick,
-  onCountingClick,
-  onComparisonClick,
-  onAssignmentClick,
-  // ... other click handlers
-}) => {
+const SkillGrid = () => {
+  const [currentSkill, setCurrentSkill] = useState(null);
+  const [overallProgress, setOverallProgress] = useState({});
+
+  useEffect(() => {
+    // Load overall progress from localStorage
+    const storedProgress = localStorage.getItem('overallProgress');
+    if (storedProgress) {
+      setOverallProgress(JSON.parse(storedProgress));
+    }
+  }, []);
+
   const handleSkillClick = (skill) => {
     if (skill.locked) return;
-    // Call the appropriate click handler based on the skill key
+    // Handle skill click
     switch (skill.key) {
       case 'addition':
-        onAdditionClick && onAdditionClick();
+        setCurrentSkill('addition');
         break;
-      case 'subtraction':
-        onSubtractionClick && onSubtractionClick();
-        break;
-      case 'division':
-        onDivisionClick && onDivisionClick();
-        break;
-      case 'multiplication':
-        onMultiplicationClick && onMultiplicationClick();
-        break;
-      case 'counting':
-        onCountingClick && onCountingClick();
-        break;
-      case 'comparison':
-        onComparisonClick && onComparisonClick();
-        break;
-      case 'assignment':
-        onAssignmentClick && onAssignmentClick();
-        break;
-      // ... handle other skills
+      // Handle other skills as needed
       default:
         break;
     }
   };
 
-  return (
+  const handleAdditionCompletion = () => {
+    // Update overall progress
+    const updatedProgress = { ...overallProgress, additionCompleted: true };
+    localStorage.setItem('overallProgress', JSON.stringify(updatedProgress));
+    setOverallProgress(updatedProgress);
+
+    // Return to SkillGrid
+    setCurrentSkill(null);
+  };
+
+  return currentSkill === 'addition' ? (
+    <AdditionPracticeScreen onCompletion={handleAdditionCompletion} />
+  ) : (
     <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 2, pt: 4 }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
         <Box
@@ -261,7 +258,10 @@ const SkillGrid = ({
                           let isLocked = true;
                           if (category.category === 'Basic') {
                             if (skill.name === 'Addition') {
-                              isLocked = false; // Unlock Addition
+                              isLocked = false; // Always unlocked
+                            } else if (skill.name === 'Subtraction') {
+                              // Unlock Subtraction if Addition is completed
+                              isLocked = !overallProgress.additionCompleted;
                             } else {
                               isLocked = true; // Lock other skills
                             }

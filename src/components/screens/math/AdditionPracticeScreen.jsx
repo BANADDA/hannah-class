@@ -1,22 +1,37 @@
 // AdditionPracticeScreen.jsx
 
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
+import { Card, CardContent } from '@mui/material';
 import { Smartphone } from 'lucide-react';
-import { useState } from 'react';
-import AdditionWithPictures from './AdditionWithPictures';
+import React, { useEffect, useState } from 'react';
+import AdditionWithPictures from './AdditionWithPictures'; // Import other practice components as needed
+import ChooseAdditionPictures from './ChooseAdditionPictures';
 
-const AdditionPracticeScreen = ({ onBack }) => {
-  const [selectedPractice, setSelectedPractice] = useState(null)
-  // Ensure each practice item has a unique 'id'
+const AdditionPracticeScreen = () => {
+  const [selectedPractice, setSelectedPractice] = useState(null);
+  const [practiceStates, setPracticeStates] = useState({});
+
+  // Define your practices with unique IDs
   const practices = [
     { id: 1, title: 'Addition with Pictures', completed: 0, total: 5, hasApp: true },
-    { id: 2, title: 'Choose Addition Pictures', completed: 0, total: 5, hasApp: false },
+    { id: 2, title: 'Choose Addition Pictures', completed: 0, total: 5, hasApp: true },
     { id: 3, title: 'Choose Addition Pictures Up to 10', completed: 0, total: 5, hasApp: false },
     { id: 4, title: 'Add Two Numbers Up to 5', completed: 0, total: 5, hasApp: false },
     { id: 5, title: 'How to Make a Number with Sums Up to 10', completed: 0, total: 5, hasApp: false },
     { id: 6, title: 'Count Groups of Ten to 10, 50, 100', completed: 0, total: 5, hasApp: false },
-  ]; 
+  ];
+
+  // Load practice states from localStorage on initial render
+  useEffect(() => {
+    const storedStates = localStorage.getItem('practiceStates');
+    if (storedStates) {
+      setPracticeStates(JSON.parse(storedStates));
+    }
+  }, []);
+
+  // Save practice states to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('practiceStates', JSON.stringify(practiceStates));
+  }, [practiceStates]);
 
   const handlePracticeClick = (practice) => {
     if (practice.hasApp) { // Ensure the practice is available
@@ -24,6 +39,37 @@ const AdditionPracticeScreen = ({ onBack }) => {
     } else {
       alert('This practice is coming soon!');
     }
+  };
+
+  // Function to update the state of a specific practice
+  const updatePracticeState = (practiceId, newState) => {
+    setPracticeStates(prevStates => ({
+      ...prevStates,
+      [practiceId]: {
+        ...prevStates[practiceId],
+        ...newState,
+      },
+    }));
+  };
+
+  // Update practices with completed counts based on practiceStates
+  const updatedPractices = practices.map(practice => {
+    const state = practiceStates[practice.id];
+    return {
+      ...practice,
+      completed: state ? (state.gameCompleted ? state.stars : 0) : 0, // Example logic: stars earned as completed
+    };
+  });
+
+  // Mapping of practice IDs to their corresponding components
+  const practiceComponents = {
+    1: AdditionWithPictures,
+    2: ChooseAdditionPictures,
+    // Add more mappings as you create additional components
+    // 3: ChooseAdditionPicturesUpTo10,
+    // 4: AddTwoNumbersUpTo5,
+    // 5: HowToMakeANumberWithSumsUpTo10,
+    // 6: CountGroupsOfTen,
   };
 
   return (
@@ -36,27 +82,25 @@ const AdditionPracticeScreen = ({ onBack }) => {
       {/* Conditional Rendering */}
       {!selectedPractice ? (
         // Practices List
-        <div className="flex flex-col mt-4">
-          {practices.map((practice) => (
+        <div className="flex flex-col mt-8">
+          {updatedPractices.map((practice) => (
             <Card
               key={practice.id}
               variant="outlined"
+              className="mb-4 transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer"
+              onClick={() => handlePracticeClick(practice)}
               sx={{
                 backgroundColor: '#EBEEF3FF',
-                transition: 'background-color 0.3s ease-in-out',
                 '&:hover': {
                   backgroundColor: '#CDD7E0FF',
                 },
                 boxShadow: 'none',
-                border: 'none',
-                marginBottom: '1rem',
-                cursor: practice.hasApp ? 'pointer' : 'not-allowed',
-                opacity: practice.hasApp ? 1 : 0.6,
+                border: '1px solid #CBD5E0', // Light gray border
+                padding: '0.05rem',
+                borderRadius: '0.5rem',
               }}
-              className="mb-4 transition-all duration-300 ease-in-out"
-              onClick={() => handlePracticeClick(practice)}
             >
-              <CardContent sx={{ padding: '1rem', fontWeight: "bold" }}>
+              <CardContent>
                 <div className="flex items-center justify-between">
                   {/* Practice Details */}
                   <div className="flex items-center space-x-4 flex-grow">
@@ -80,8 +124,15 @@ const AdditionPracticeScreen = ({ onBack }) => {
           ))}
         </div>
       ) : (
-        // Render Selected Practice Component
-        <AdditionWithPictures onBack={() => setSelectedPractice(null)} />
+        // Render Selected Practice Component Dynamically
+        React.createElement(
+          practiceComponents[selectedPractice.id],
+          {
+            onBack: () => setSelectedPractice(null),
+            initialState: practiceStates[selectedPractice.id],
+            onStateChange: (newState) => updatePracticeState(selectedPractice.id, newState),
+          }
+        )
       )}
     </div>
   );

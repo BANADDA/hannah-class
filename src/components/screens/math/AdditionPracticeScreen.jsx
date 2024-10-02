@@ -2,6 +2,7 @@
 
 import { Button, Card, CardContent } from '@mui/material';
 import Lottie from 'lottie-react';
+import { Lock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
@@ -50,7 +51,36 @@ const AdditionPracticeScreen = ({ onCompletion, onBack }) => {
       description: 'Select the correct picture for the addition!',
       component: ChooseAdditionPictures,
     },
-    // Add more practices as needed
+    {
+      id: 3,
+      title: 'Add Two Numbers Up to 5',
+      completed: 0,
+      total: 5,
+      hasApp: false, // Assuming component not yet implemented
+      icon: '➕',
+      description: 'Practice adding two numbers up to 5.',
+      component: null, // Placeholder
+    },
+    {
+      id: 4,
+      title: 'How to Make a Number with Sums Up to 10',
+      completed: 0,
+      total: 5,
+      hasApp: false, // Assuming component not yet implemented
+      icon: '🔢',
+      description: 'Learn different ways to make numbers up to 10.',
+      component: null, // Placeholder
+    },
+    {
+      id: 5,
+      title: 'Count Groups of Ten to 10, 50, 100',
+      completed: 0,
+      total: 5,
+      hasApp: false, // Assuming component not yet implemented
+      icon: '🔟',
+      description: 'Count by tens up to 100.',
+      component: null, // Placeholder
+    },
   ];
 
   // Load practice states from localStorage on initial render
@@ -69,7 +99,7 @@ const AdditionPracticeScreen = ({ onCompletion, onBack }) => {
   // Check if all practices are completed
   useEffect(() => {
     const allCompleted = practices.every(
-      (practice) => practiceStates[practice.id]?.completed === practice.total
+      (practice) => practiceStates[practice.id]?.completed === practice.total || !practice.hasApp
     );
     if (allCompleted && onCompletion) {
       // Update overall progress in localStorage
@@ -123,15 +153,6 @@ const AdditionPracticeScreen = ({ onCompletion, onBack }) => {
 
       {/* Header Section */}
       <div className="flex justify-between items-center mb-4">
-        {/* <Button
-          variant="outlined"
-          onClick={onBack}
-          className="flex items-center justify-center"
-          aria-label="Back"
-          style={{ borderColor: '#ff6f61', color: '#ff6f61' }}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button> */}
         <h1 className="text-3xl font-bold text-pink-600 text-center flex-grow">
           Interactive Addition Practice
         </h1>
@@ -177,12 +198,14 @@ const AdditionPracticeScreen = ({ onCompletion, onBack }) => {
             <Card
               key={practice.id}
               variant="outlined"
-              className="mb-4 transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer"
+              className={`mb-4 transition-all duration-300 ease-in-out ${
+                practice.hasApp ? 'hover:shadow-lg cursor-pointer' : 'opacity-50 cursor-not-allowed'
+              }`}
               onClick={() => handlePracticeClick(practice)}
               sx={{
                 backgroundColor: '#EBEEF3FF',
                 '&:hover': {
-                  backgroundColor: '#CDD7E0FF',
+                  backgroundColor: practice.hasApp ? '#CDD7E0FF' : '#EBEEF3FF',
                 },
                 boxShadow: 'none',
                 border: '1px solid #CBD5E0',
@@ -201,19 +224,25 @@ const AdditionPracticeScreen = ({ onCompletion, onBack }) => {
                     </div>
                   </div>
 
-                  {/* Completion Badge */}
-                  <div className="flex items-center space-x-1">
-                    {[...Array(practice.total)].map((_, i) => (
-                      <span
-                        key={i}
-                        className={`text-2xl ${
-                          i < practice.completed ? 'text-yellow-400' : 'text-gray-300'
-                        }`}
-                      >
-                        ⭐
-                      </span>
-                    ))}
-                  </div>
+                  {/* Completion Badge or Lock Icon */}
+                  {practice.hasApp ? (
+                    <div className="flex items-center space-x-1">
+                      {[...Array(practice.total)].map((_, i) => (
+                        <span
+                          key={i}
+                          className={`text-2xl ${
+                            i < practice.completed ? 'text-yellow-400' : 'text-gray-300'
+                          }`}
+                        >
+                          ⭐
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

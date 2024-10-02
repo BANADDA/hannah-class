@@ -220,7 +220,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
   };
 
   return (
-    <div className="py-14 px-5 bg-gradient-to-b from-blue-100 to-white min-h-screen">
+    <div className="py-14 px-5">
       {/* Confetti for Celebration */}
       {gameCompleted && <Confetti width={width} height={height} />}
       <div className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">

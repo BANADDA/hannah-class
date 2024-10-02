@@ -92,7 +92,7 @@ const ClassmoWelcomeScreen = () => {
 
       <div className="max-w-7xl w-full bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Main Welcome Screen */}
-        <div className="bg-yellow-300 flex justify-center items-end h-48">
+        <div className="bg-yellow-300 flex justify-center items-end h-40">
           <div className="relative">
             <div className="absolute -top-28 left-1/2 transform -translate-x-1/2">
               <div className="w-32 h-16 bg-yellow-400 rounded-t-full"></div>

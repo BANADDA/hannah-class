@@ -19,12 +19,11 @@ const AdditionPracticeScreen = ({ onCompletion }) => {
 
   // Practices with unique IDs
   const practices = [
-    { id: 1, title: 'Addition with Pictures', completed: 0, total: 5, hasApp: true },
-    { id: 2, title: 'Choose Addition Pictures', completed: 0, total: 5, hasApp: true },
-    { id: 3, title: 'Choose Addition Pictures Up to 10', completed: 0, total: 5, hasApp: false },
-    { id: 4, title: 'Add Two Numbers Up to 5', completed: 0, total: 5, hasApp: false },
-    { id: 5, title: 'How to Make a Number with Sums Up to 10', completed: 0, total: 5, hasApp: false },
-    { id: 6, title: 'Count Groups of Ten to 10, 50, 100', completed: 0, total: 5, hasApp: false },
+    { id: 1, title: 'Addition with Pictures Up to 5', completed: 0, total: 5, hasApp: true },
+    { id: 2, title: 'Choose Addition Pictures Up to 5', completed: 0, total: 5, hasApp: true },
+    { id: 3, title: 'Add Two Numbers Up to 5', completed: 0, total: 5, hasApp: false },
+    { id: 4, title: 'How to Make a Number with Sums Up to 10', completed: 0, total: 5, hasApp: false },
+    { id: 5, title: 'Count Groups of Ten to 10, 50, 100', completed: 0, total: 5, hasApp: false },
   ];
 
   // Load practice states from localStorage on initial render
@@ -101,7 +100,7 @@ const AdditionPracticeScreen = ({ onCompletion }) => {
   return (
     <div className='py-14 px-5'>
       {/* Header Section */}
-      <header className='bg-white text-black text-center text-3xl font-bold'>Addition</header>
+      <header className='bg-white text-black text-center text-3xl font-bold'>Interactive Math Facts</header>
 
       {/* Conditional Rendering */}
       {!selectedPractice ? (

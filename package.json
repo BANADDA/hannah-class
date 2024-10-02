@@ -12,11 +12,15 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@hello-pangea/dnd": "^17.0.0",
     "@mui/material": "^6.1.1",
+    "lottie-react": "^2.4.0",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
+    "react-confetti": "^6.1.0",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
+    "react-use": "^17.5.1",
     "recharts": "^2.12.7",
     "use-sound": "^4.0.3"
   },

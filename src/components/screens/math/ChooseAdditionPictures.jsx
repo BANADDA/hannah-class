@@ -264,7 +264,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                 <Lottie
                   animationData={mascotAnimation}
                   loop={true}
-                  style={{ width: 300, height: 300 }}
+                  style={{ width: '100%', height: 'auto' }}
                 />
               </div>
               <Button
@@ -295,20 +295,20 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                 <Lottie
                   animationData={teachingAnimation}
                   loop={true}
-                  style={{ width: 300, height: 300 }}
+                  style={{ width: '100%', height: 'auto' }}
                 />
               </div>
               <p className="text-center text-lg">
                 For example, if we have 2 apples and 3 bananas, how many fruits do we have?
               </p>
-              <div className="flex items-center space-x-2 mt-4">
+              <div className="flex flex-wrap justify-center items-center space-x-2 mt-4">
                 <span className="text-4xl">{emojis.apple}</span>
                 <span className="text-4xl">{emojis.apple}</span>
-                <span className="text-3xl font-bold text-pink-600">+</span>
+                <span className="text-3xl font-bold text-pink-600 mx-2">+</span>
                 <span className="text-4xl">{emojis.banana}</span>
                 <span className="text-4xl">{emojis.banana}</span>
                 <span className="text-4xl">{emojis.banana}</span>
-                <span className="text-3xl font-bold text-pink-600">=</span>
+                <span className="text-3xl font-bold text-pink-600 mx-2">=</span>
                 <span className="text-4xl">{emojis.apple}</span>
                 <span className="text-4xl">{emojis.apple}</span>
                 <span className="text-4xl">{emojis.banana}</span>
@@ -347,7 +347,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                 What is {question && question.question}?
               </div>
 
-              <div className="flex justify-around mb-6">
+              <div className="flex flex-col md:flex-row justify-around items-center mb-6 space-y-4 md:space-y-0">
                 {question &&
                   question.options.map((option, index) => {
                     const isCorrectOption = showFeedback && option.isCorrect;
@@ -357,7 +357,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                     return (
                       <div
                         key={index}
-                        className={`relative w-64 h-64 bg-pink-100 rounded-full flex flex-wrap justify-center items-center p-4 shadow-md cursor-pointer transition transform hover:scale-105 ${
+                        className={`relative w-full max-w-xs bg-pink-100 rounded-full flex flex-wrap justify-center items-center p-4 shadow-md cursor-pointer transition transform hover:scale-105 ${
                           isCorrectOption
                             ? 'border-4 border-green-500'
                             : isSelectedIncorrect
@@ -455,7 +455,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                 <Lottie
                   animationData={celebrationAnimation}
                   loop={true}
-                  style={{ width: 300, height: 300 }}
+                  style={{ width: '100%', height: 'auto' }}
                 />
               </div>
               <h2 className="text-3xl font-bold text-green-600 mb-2">You Did It! 🎉</h2>
@@ -469,12 +469,12 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                   </span>
                 ))}
               </div>
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                 <Button
                   onClick={handleRetry}
                   variant="contained"
                   color="primary"
-                  className="flex items-center space-x-2 text-lg animate-bounce"
+                  className="flex items-center justify-center space-x-2 text-lg animate-bounce"
                   style={{
                     backgroundColor: '#ff6f61',
                     color: '#fff',
@@ -488,7 +488,7 @@ const ChooseAdditionPictures = ({ onBack, initialState = {}, onStateChange }) =>
                   onClick={onBack}
                   variant="contained"
                   color="secondary"
-                  className="flex items-center space-x-2 text-lg"
+                  className="flex items-center justify-center space-x-2 text-lg"
                   style={{
                     backgroundColor: '#4caf50',
                     color: '#fff',

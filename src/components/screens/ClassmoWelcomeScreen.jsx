@@ -1,5 +1,8 @@
+import Lottie from 'lottie-react'; // Import Lottie
 import { ArrowRight, BookOpen, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
+import mascotAnimation from '../../animations/hannah-logo.json'; // Import mascot animation
+import MathMasterQuest from '../facts/MathMasterQuest';
 import GameDashboard from './GameOption'; // Import your GameDashboard component
 import SkillGrid from './SkillGrid';
 import WordSearchGame from './WordSearchGame';
@@ -16,6 +19,14 @@ const ClassmoWelcomeScreen = () => {
   // Function to switch to Math Quest
   const onMathQuestClick = () => {
     setCurrentView('mathquest');
+  };
+
+  // Function to switch to Math Facts
+  const onMathFactsClick = () => {
+    console.log('====================================');
+    console.log("Clicked math facts");
+    console.log('====================================');
+    setCurrentView('mathfacts');
   };
 
   // Function to switch to Puzzle Quest
@@ -51,6 +62,17 @@ const ClassmoWelcomeScreen = () => {
             {' > '}
             <span className="cursor-pointer hover:text-black" onClick={onProceedToDashboard}>
               Games
+            </span>
+          </>
+        )}
+        {currentView === 'mathfacts' && (
+          <>
+            {' > '}
+            <span className="cursor-pointer hover:text-black" onClick={onProceedToDashboard}>
+              Games
+            </span>{' > '}
+            <span className="cursor-pointer hover:text-black" onClick={onMathFactsClick}>
+              Math Facts
             </span>
           </>
         )}
@@ -130,6 +152,14 @@ const ClassmoWelcomeScreen = () => {
               <p className="text-gray-600 text-center mb-8 text-lg">
                 Classmo is your fun math world where numbers are your friends, and learning is an adventure! Let&apos;s play, explore, and learn together!
               </p>
+              {/* Add animation here */}
+              <div className="w-full  relative flex flex-col max-w-md mx-auto mb-8 items-center justify-center">
+                <Lottie
+                  animationData={mascotAnimation}
+                  loop={true}
+                  style={{ width: '60%', height: 'auto' }}
+                />
+              </div>
               <div className="space-y-4">
                 <button className="w-full py-3 px-6 bg-gray-100 text-gray-800 rounded-md flex items-center justify-between hover:bg-gray-200 transition-colors group">
                   <span className="flex items-center text-lg">
@@ -158,10 +188,13 @@ const ClassmoWelcomeScreen = () => {
 
         {currentView === 'dashboard' && (
           <GameDashboard
+            onMathFactsClick={onMathFactsClick}
             onMathQuestClick={onMathQuestClick}
             onPuzzleQuestClick={onPuzzleQuestClick}
           />
         )}
+
+        {currentView === 'mathfacts' && <MathMasterQuest />}
 
         {currentView === 'mathquest' && <SkillGrid onAdditionClick={onAdditionClick} />}
 

@@ -1,61 +1,48 @@
-// GameOption.jsx
-
 import PropTypes from 'prop-types';
 import React from 'react';
 import useSound from 'use-sound';
+import hoverSound from '/sounds/hover_sound.mp3';
 
-// Import the hover sound
-import hoverSound from '/sounds/hover_sound.mp3'; // Adjust the path as needed
-
-const GameOption = ({ title, icon, color, starred, onClick }) => {
-  // Initialize the hover sound
+const GameOption = ({ title, icon, color, starred, onClick, muted }) => {
   const [playHoverSound] = useSound(hoverSound, { volume: 0.5 });
+
+  const handleInteraction = (e, isEnter) => {
+    if (muted) return;
+    
+    if (isEnter) {
+      playHoverSound();
+      e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(1)';
+      e.currentTarget.querySelector('.title').style.color = 'white';
+      e.currentTarget.querySelector('.icon-bg').style.backgroundColor = 'white';
+      e.currentTarget.querySelector('.icon').style.color = color;
+    } else {
+      e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(0)';
+      e.currentTarget.querySelector('.title').style.color = color;
+      e.currentTarget.querySelector('.icon-bg').style.backgroundColor = color;
+      e.currentTarget.querySelector('.icon').style.color = 'white';
+    }
+  };
 
   return (
     <div
-      className="relative flex items-center p-4 rounded-lg border-2 transition-all cursor-pointer w-full overflow-hidden"
-      style={{ borderColor: color }} // Set initial border color
-      onClick={onClick} // Handle click events
-      onMouseEnter={(e) => {
-        playHoverSound(); // Play the hover sound
-        e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(1)'; // Start fill effect
-        e.currentTarget.querySelector('.title').style.color = 'white'; // Change text to white
-        e.currentTarget.querySelector('.icon-bg').style.backgroundColor = 'white'; // Change icon background to white
-        e.currentTarget.querySelector('.icon').style.color = color; // Change icon color to the original color
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(0)'; // Reset fill effect
-        e.currentTarget.querySelector('.title').style.color = color; // Reset text color to original color
-        e.currentTarget.querySelector('.icon-bg').style.backgroundColor = color; // Reset icon background to original color
-        e.currentTarget.querySelector('.icon').style.color = 'white'; // Reset icon color to white
-      }}
-      // Make the component accessible on touch devices
-      onTouchStart={(e) => {
-        playHoverSound(); // Play the hover sound on touch
-        e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(1)';
-        e.currentTarget.querySelector('.title').style.color = 'white';
-        e.currentTarget.querySelector('.icon-bg').style.backgroundColor = 'white';
-        e.currentTarget.querySelector('.icon').style.color = color;
-      }}
-      onTouchEnd={(e) => {
-        e.currentTarget.querySelector('.fill-bg').style.transform = 'scale(0)';
-        e.currentTarget.querySelector('.title').style.color = color;
-        e.currentTarget.querySelector('.icon-bg').style.backgroundColor = color;
-        e.currentTarget.querySelector('.icon').style.color = 'white';
-      }}
+      className={`relative flex items-center p-4 rounded-lg border-2 transition-all w-full overflow-hidden ${muted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+      style={{ borderColor: color }}
+      onClick={muted ? undefined : onClick}
+      onMouseEnter={(e) => handleInteraction(e, true)}
+      onMouseLeave={(e) => handleInteraction(e, false)}
+      onTouchStart={(e) => handleInteraction(e, true)}
+      onTouchEnd={(e) => handleInteraction(e, false)}
     >
-      {/* Special Background Fill Effect */}
       <div
         className="absolute top-0 left-0 w-full h-full transition-transform duration-500 ease-in-out fill-bg"
         style={{
-          backgroundColor: color, // Use the unique color for each game
-          transformOrigin: 'top left', // Start fill from the top-left corner
-          transform: 'scale(0)', // Start with a scale of 0
-          zIndex: 0, // Keep the background behind the text and icon
+          backgroundColor: color,
+          transformOrigin: 'top left',
+          transform: 'scale(0)',
+          zIndex: 0,
         }}
       ></div>
 
-      {/* Icon Section */}
       <div
         className="relative w-14 h-14 mr-4 rounded-md flex items-center justify-center border-2 icon-bg transition-all duration-500"
         style={{
@@ -67,7 +54,6 @@ const GameOption = ({ title, icon, color, starred, onClick }) => {
         <span className="text-3xl text-white icon transition-all duration-500">{icon}</span>
       </div>
 
-      {/* Title Section */}
       <span
         className="relative text-xl font-semibold title transition-all duration-500"
         style={{ color, zIndex: 1 }}
@@ -80,32 +66,39 @@ const GameOption = ({ title, icon, color, starred, onClick }) => {
           ★
         </span>
       )}
+
+      {muted && (
+        <span className="absolute right-4 text-2xl" style={{ zIndex: 1 }}>
+          🔒
+        </span>
+      )}
     </div>
   );
 };
 
-// Define PropTypes for better type checking
 GameOption.propTypes = {
   title: PropTypes.string.isRequired,
   icon: PropTypes.string.isRequired,
   color: PropTypes.string.isRequired,
   starred: PropTypes.bool,
   onClick: PropTypes.func,
+  muted: PropTypes.bool,
 };
 
 GameOption.defaultProps = {
   starred: false,
   onClick: () => {},
+  muted: false,
 };
 
 const GameDashboard = ({ onMathFactsClick, onMathQuestClick, onPuzzleQuestClick }) => {
   const games = [
-    { title: 'Math Facts', icon: '📚', color: '#cc6699', starred: true, onClick: onMathFactsClick }, // Reading -> Story Time
-    { title: 'Math Quest', icon: '🛡️', color: '#C9A253FF', starred: true, onClick: onMathQuestClick }, // Quick Maths -> Math Quest
-    { title: 'Princess Puzzle', icon: '👸', color: '#ffcc99', starred: true, onClick: onPuzzleQuestClick }, // Word Search -> Princess Puzzle
-    { title: "Writer's Club", icon: '🦅', color: '#ff9966', starred: true, onClick: onMathQuestClick }, // Counting -> Count the Critters
-    { title: 'Homework Helper', icon: '✏️', color: '#99ccff', starred: true }, // Homework & Assessment -> Homework Helper
-    { title: 'Royal Rankings', icon: '👑', color: '#ff99cc', starred: true, onClick: onMathQuestClick}, // Leader Board -> Royal Rankings (with a crown)
+    { title: 'Math Facts', icon: '📚', color: '#cc6699', starred: true, onClick: onMathFactsClick, muted: false },
+    { title: 'Math Quest', icon: '🛡️', color: '#C9A253FF', starred: true, onClick: onMathQuestClick, muted: true },
+    { title: 'Princess Puzzle', icon: '👸', color: '#ffcc99', starred: true, onClick: onPuzzleQuestClick, muted: true },
+    { title: "Writer's Club", icon: '🦅', color: '#ff9966', starred: true, onClick: onMathQuestClick, muted: true },
+    { title: 'Homework Helper', icon: '✏️', color: '#99ccff', starred: true, muted: true },
+    { title: 'Royal Rankings', icon: '👑', color: '#ff99cc', starred: true, onClick: onMathQuestClick, muted: true },
   ];
 
   return (

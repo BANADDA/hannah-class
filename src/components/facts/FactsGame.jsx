@@ -406,11 +406,11 @@ const MathFactFamilyQuiz = () => {
         <Box
           className="bg-green-100 p-4 pt-2 rounded-lg mb-5 text-center w-full"
           sx={{
-            backgroundColor: '#BBF7D0', // bg-green-100 equivalent
-            padding: '1rem', // p-4
-            paddingTop: '0.5rem', // pt-2
-            borderRadius: '0.5rem', // rounded-lg
-            marginBottom: '1.25rem', // mb-5
+            backgroundColor: '#BBF7D0',
+            padding: '1rem',
+            paddingTop: '0.5rem',
+            borderRadius: '0.5rem',
+            marginBottom: '1.25rem',
             textAlign: 'center',
             width: '100%',
           }}
@@ -419,21 +419,21 @@ const MathFactFamilyQuiz = () => {
             variant="h5"
             sx={{
               fontWeight: 'bold',
-              fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive fontSize
-              color: '#2F855A', // Equivalent to text-green-700
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              color: '#2F855A',
             }}
           >
             Math Adventure
           </Typography>
           <Typography
             sx={{
-              fontWeight: 500, // Equivalent to font-semibold
-              fontSize: { xs: '1rem', sm: '1.2rem' }, // Responsive fontSize
-              color: '#4A5568', // Equivalent to text-gray-700
-              marginTop: '0.5rem', // Optional spacing
+              fontWeight: 500,
+              fontSize: { xs: '1rem', sm: '1.2rem' },
+              color: '#4A5568',
+              marginTop: '0.5rem',
             }}
           >
-            When we know one fact, we can use it to solve other facts too! It&apos;s like finding clues to a puzzle.
+            When we know one fact, we can use it to solve other facts too! It's like finding clues to a puzzle.
           </Typography>
         </Box>
 
@@ -443,7 +443,7 @@ const MathFactFamilyQuiz = () => {
           sx={{
             margin: 'auto',
             mt: 5,
-            p: 1, // Reduced padding
+            p: 1,
             boxShadow: 0,
             background: '#F4F3F2FF',
             overflow: 'hidden',
@@ -455,7 +455,7 @@ const MathFactFamilyQuiz = () => {
           <CardContent
             sx={{
               textAlign: 'center',
-              width: { xs: '90%', sm: '70%', md: '50%' }, // Responsive width
+              width: { xs: '90%', sm: '70%', md: '50%' },
               height: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -465,9 +465,9 @@ const MathFactFamilyQuiz = () => {
           >
             <Typography
               sx={{
-                fontWeight: 500, // Equivalent to font-semibold
-                fontSize: { xs: '1rem', sm: '1.2rem' }, // Responsive fontSize
-                color: '#4A5568', // Equivalent to text-gray-700
+                fontWeight: 500,
+                fontSize: { xs: '1rem', sm: '1.2rem' },
+                color: '#4A5568',
               }}
             >
               Choose Your Math Adventure!
@@ -475,10 +475,10 @@ const MathFactFamilyQuiz = () => {
 
             <Grid
               container
-              columnSpacing={0.5} // Reduced horizontal spacing (4px)
-              rowSpacing={2} // Maintain or adjust vertical spacing as needed
+              columnSpacing={0.5}
+              rowSpacing={2}
               justifyContent="center"
-              columns={{ xs: 4, sm: 5 }} // Responsive number of columns
+              columns={{ xs: 4, sm: 5 }}
               sx={{ marginBottom: 5, marginTop: 1 }}
             >
               {numbers.map((number, index) => (
@@ -493,25 +493,25 @@ const MathFactFamilyQuiz = () => {
                       }
                     }}
                     sx={{
-                      width: { xs: 60, sm: 80 }, // Responsive width
-                      height: { xs: 60, sm: 80 }, // Responsive height
+                      width: { xs: 60, sm: 80 },
+                      height: { xs: 60, sm: 80 },
                       minWidth: 'auto',
-                      padding: 0, // Remove internal padding
-                      borderRadius: '50%', // Make buttons circular
-                      fontSize: { xs: '1rem', sm: '1.5rem' }, // Responsive fontSize
+                      padding: 0,
+                      borderRadius: '50%',
+                      fontSize: { xs: '1rem', sm: '1.5rem' },
                       backgroundColor: selectedNumber === number ? colors[index] : 'white',
                       color: selectedNumber === number ? '#fff' : colors[index],
                       borderColor: colors[index],
-                      margin: 0, // Remove default margin
-                      boxSizing: 'border-box', // Include borders in size
+                      margin: 0,
+                      boxSizing: 'border-box',
                       transition:
                         'background-color 0.3s ease-in-out, color 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
                       '&:hover': {
                         backgroundColor:
                           selectedNumber === number ? colors[index] : '#F8F4F4FF',
                         color: selectedNumber === number ? '#fff' : colors[index],
-                        transform: 'scale(1.05)', // Optional scaling
-                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)', // Optional shadow
+                        transform: 'scale(1.05)',
+                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
                       },
                     }}
                   >
@@ -526,16 +526,16 @@ const MathFactFamilyQuiz = () => {
               <>
                 <Typography
                   sx={{
-                    fontWeight: 500, // Equivalent to font-semibold
-                    fontSize: { xs: '1rem', sm: '1.2rem' }, // Responsive fontSize
-                    color: '#4A5568', // Equivalent to text-gray-700
+                    fontWeight: 500,
+                    fontSize: { xs: '1rem', sm: '1.2rem' },
+                    color: '#4A5568',
                   }}
                 >
                   Choose Your Operation
                 </Typography>
                 <Grid
                   container
-                  spacing={10} // Sets both column and row spacing to 24px
+                  spacing={10}
                   justifyContent="center"
                   sx={{ marginBottom: 5, marginTop: 1 }}
                 >
@@ -544,12 +544,13 @@ const MathFactFamilyQuiz = () => {
                       <Button
                         variant={selectedOperation === op ? 'contained' : 'outlined'}
                         color="secondary"
-                        onClick={() => handleOperationClick(op)}
+                        onClick={() => op === 'addition' && handleOperationClick(op)}
                         onMouseEnter={() => {
-                          if (selectedOperation !== op) {
+                          if (selectedOperation !== op && op === 'addition') {
                             playHover();
                           }
                         }}
+                        disabled={op !== 'addition'}
                         sx={{
                           width: { xs: '100%', sm: '200px' },
                           height: 50,
@@ -559,22 +560,23 @@ const MathFactFamilyQuiz = () => {
                           backgroundColor:
                             selectedOperation === op ? '#FFB74D' : 'white',
                           color:
-                            selectedOperation === op ? '#fff' : '#71480AFF',
-                          borderColor: '#FFB74D',
+                            op === 'addition' ? (selectedOperation === op ? '#fff' : '#71480AFF') : '#9E9E9E',
+                          borderColor: op === 'addition' ? '#FFB74D' : '#E0E0E0',
                           boxSizing: 'border-box',
                           transition:
                             'background-color 0.3s ease-in-out, color 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
                           '&:hover': {
                             backgroundColor:
-                              selectedOperation === op ? '#FFA726' : '#FFF3E0',
+                              op === 'addition' ? (selectedOperation === op ? '#FFA726' : '#FFF3E0') : 'white',
                             color:
-                              selectedOperation === op ? '#fff' : '#815007FF',
-                            transform: 'scale(1.05)',
-                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                              op === 'addition' ? (selectedOperation === op ? '#fff' : '#815007FF') : '#9E9E9E',
+                            transform: op === 'addition' ? 'scale(1.05)' : 'none',
+                            boxShadow: op === 'addition' ? '0px 4px 10px rgba(0, 0, 0, 0.2)' : 'none',
                           },
                         }}
                       >
                         {op.charAt(0).toUpperCase() + op.slice(1)}
+                        {op !== 'addition' && ' 🔒'}
                       </Button>
                     </Grid>
                   ))}
@@ -593,7 +595,7 @@ const MathFactFamilyQuiz = () => {
                     marginBottom: '1rem',
                   }}
                 >
-                  Let&apos;s Learn!
+                  Let's Learn!
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   <strong>
@@ -625,7 +627,8 @@ const MathFactFamilyQuiz = () => {
           </CardContent>
         </Card>
       </Box>
-    )};
+    );
+  };
 
     // Function to get lesson content based on selected number and operation
     const getLessonContent = (number, operation) => {

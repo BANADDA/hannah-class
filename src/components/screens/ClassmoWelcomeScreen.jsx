@@ -2,7 +2,7 @@ import Lottie from 'lottie-react'; // Import Lottie
 import { ArrowRight, BookOpen, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import mascotAnimation from '../../animations/hannah-logo.json'; // Import mascot animation
-import MathMasterQuest from '../facts/MathMasterQuest';
+import MathFactFamilyQuiz from '../facts/FactsGame';
 import GameDashboard from './GameOption'; // Import your GameDashboard component
 import SkillGrid from './SkillGrid';
 import WordSearchGame from './WordSearchGame';
@@ -194,7 +194,7 @@ const ClassmoWelcomeScreen = () => {
           />
         )}
 
-        {currentView === 'mathfacts' && <MathMasterQuest />}
+        {currentView === 'mathfacts' && <MathFactFamilyQuiz />}
 
         {currentView === 'mathquest' && <SkillGrid onAdditionClick={onAdditionClick} />}
 

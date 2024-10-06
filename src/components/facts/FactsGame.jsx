@@ -384,19 +384,19 @@ const MathFactFamilyQuiz = () => {
   const getDetailedExplanation = (number, operation) => {
     const explanations = {
       addition: [
-        `🍎 **Apples**: Imagine you have ${number} apples. If you receive ${currentQuestion.correctAnswer - number} more apples, you now have ${currentQuestion.correctAnswer} apples.`,
-        `🚗 **Cars**: Suppose you own ${number} toy cars. Adding ${currentQuestion.correctAnswer - number} more toy cars means you now have ${currentQuestion.correctAnswer} toy cars.`,
-        `🎨 **Colors**: If you have ${number} blue crayons and someone gives you ${currentQuestion.correctAnswer - number} more blue crayons, you now have ${currentQuestion.correctAnswer} blue crayons.`,
+        `1 + 1 = 2`,
+        `2 + 2 = 4`,
+        `3 + 3 = 6`,
       ],
       subtraction: [
-        `🧱 **Blocks**: Imagine you have ${currentQuestion.correctAnswer + (selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer)} blocks. If you remove ${selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer} blocks, you're left with ${currentQuestion.correctAnswer} blocks.`,
-        `📚 **Books**: Suppose you have ${currentQuestion.correctAnswer + (selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer)} books. After giving away ${selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer} books, you have ${currentQuestion.correctAnswer} books left.`,
-        `🍭 **Candies**: If you have ${currentQuestion.correctAnswer + (selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer)} candies and you eat ${selectedNumber >= currentQuestion.correctAnswer ? selectedNumber : currentQuestion.correctAnswer} candies, you now have ${currentQuestion.correctAnswer} candies remaining.`,
+        `2 - 1 = 1`,
+        `4 - 2 = 2`,
+        `6 - 3 = 3`,
       ],
       multiplication: [
-        `🍎 **Apples**: If you have ${selectedNumber} baskets with ${currentQuestion.correctAnswer / selectedNumber} apples each, you have a total of ${currentQuestion.correctAnswer} apples.`,
-        `🧸 **Toys**: Imagine you have ${selectedNumber} shelves, each holding ${currentQuestion.correctAnswer / selectedNumber} toys. In total, you have ${currentQuestion.correctAnswer} toys.`,
-        `🚗 **Cars**: Suppose you have ${selectedNumber} garages, each storing ${currentQuestion.correctAnswer / selectedNumber} toy cars. This means you have ${currentQuestion.correctAnswer} toy cars in total.`,
+        `2 × 2 = 4`,
+        `3 × 3 = 9`,
+        `4 × 4 = 16`,
       ],
     };
 
@@ -442,38 +442,14 @@ const MathFactFamilyQuiz = () => {
   };
 
   // Function to get lesson content based on selected number and operation
-  const getLessonContent = (number, operation) => {
-    switch (operation) {
-      case 'addition':
-        return (
-          <span>
-            Addition is like putting together objects. For example, if you have{' '}
-            <strong>{number}</strong> 🍎 and you get <strong>2</strong> more 🍎,
-            you now have <strong>{number + 2}</strong> 🍎!
-          </span>
-        );
-      case 'subtraction':
-        return (
-          <span>
-            Subtraction is like taking away objects. For example, if you have{' '}
-            <strong>{number + 2}</strong> 🍎 and you eat <strong>2</strong>, you
-            now have <strong>{number}</strong> 🍎 left!
-          </span>
-        );
-      case 'multiplication':
-        return (
-          <span>
-            Multiplication is like adding the same number multiple times. For
-            example, <strong>{number} × 3</strong> is the same as having{' '}
-            <strong>
-              {number} + {number} + {number} = {number * 3}
-            </strong>{' '}
-            🍎!
-          </span>
-        );
-      default:
-        return 'Let\'s get started!';
-    }
+  const getFact = (number, operation) => {
+    const facts = {
+      addition: `${number} + 1 = ${number + 1}`,
+      subtraction: `${number} - 1 = ${number - 1}`,
+      multiplication: `${number} × 1 = ${number}`,
+    };
+
+    return facts[operation] || 'Let\'s get started!';
   };
 
   // JSX for Number Selector
@@ -679,20 +655,12 @@ const MathFactFamilyQuiz = () => {
                     marginBottom: '1rem',
                   }}
                 >
-                  Let&apos;s Learn!
+                  Learn a Math Fact!
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   <strong>
-                    {selectedNumber} {selectedOperation}{' '}
-                    {selectedOperation === 'addition'
-                      ? '+'
-                      : selectedOperation === 'subtraction'
-                      ? '-'
-                      : '×'}
+                    {getFact(selectedNumber, selectedOperation)}
                   </strong>
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                  {getLessonContent(selectedNumber, selectedOperation)}
                 </Typography>
                 <Box mt={3}>
                   <Button
@@ -703,7 +671,7 @@ const MathFactFamilyQuiz = () => {
                       startQuiz();
                     }}
                   >
-                    I Understand, Start Adventure!
+                    Start Quiz
                   </Button>
                 </Box>
               </Box>

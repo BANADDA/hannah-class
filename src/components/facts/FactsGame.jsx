@@ -12,8 +12,8 @@ import {
   Typography,
 } from '@mui/material';
 import Lottie from 'lottie-react';
-import { Star } from 'lucide-react'; // Using 'Star' from 'lucide-react'
-import React, { useEffect, useState } from 'react';
+import { Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import useSound from 'use-sound';
@@ -61,7 +61,7 @@ const MathFactFamilyQuiz = () => {
   const [selectedOperation, setSelectedOperation] = useState(null);
 
   // State to control the current step
-  const [currentStep, setCurrentStep] = useState('selectNumber'); // 'selectNumber', 'selectOperation', 'lesson', 'quiz', 'gameOver'
+  const [currentStep, setCurrentStep] = useState('selectNumber'); // 'selectNumber', 'selectOperation', 'lesson', 'quiz', 'setComplete', 'gameOver'
 
   // State for managing questions
   const [questions, setQuestions] = useState([]);
@@ -89,6 +89,11 @@ const MathFactFamilyQuiz = () => {
     const stored = localStorage.getItem('performanceTracker');
     return stored ? JSON.parse(stored) : {};
   });
+
+  // State for managing sets of three numbers
+  const [numberSets, setNumberSets] = useState([]);
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [currentSetPassed, setCurrentSetPassed] = useState(false);
 
   // Define currentQuestion at the component level
   const currentQuestion = questions[currentQuestionIndex];
@@ -127,107 +132,123 @@ const MathFactFamilyQuiz = () => {
     setCurrentStep('lesson'); // Move to lesson step
   };
 
+  // Function to generate sets of three numbers paired with the selected number
+  const generateNumberSets = (selectedNumber) => {
+    const availableNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
+      (n) => n !== selectedNumber
+    );
+
+    // Shuffle the available numbers
+    for (let i = availableNumbers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [availableNumbers[i], availableNumbers[j]] = [
+        availableNumbers[j],
+        availableNumbers[i],
+      ];
+    }
+
+    // Split into sets of 3
+    const sets = [];
+    for (let i = 0; i < availableNumbers.length; i += 3) {
+      sets.push(availableNumbers.slice(i, i + 3));
+    }
+
+    return sets;
+  };
+
+  // Function to generate a single question
+  const generateQuestion = (selectedNumber, pairedNumber, operation) => {
+    let expression = "";
+    let correctAnswer;
+
+    switch (operation) {
+      case "addition":
+        expression = `${selectedNumber} + ${pairedNumber}`;
+        correctAnswer = selectedNumber + pairedNumber;
+        break;
+      case "subtraction":
+        if (selectedNumber >= pairedNumber) {
+          expression = `${selectedNumber} - ${pairedNumber}`;
+          correctAnswer = selectedNumber - pairedNumber;
+        } else {
+          expression = `${pairedNumber} - ${selectedNumber}`;
+          correctAnswer = pairedNumber - selectedNumber;
+        }
+        break;
+      case "multiplication":
+        expression = `${selectedNumber} × ${pairedNumber}`;
+        correctAnswer = selectedNumber * pairedNumber;
+        break;
+      default:
+        expression = `${selectedNumber} + ${pairedNumber}`;
+        correctAnswer = selectedNumber + pairedNumber;
+    }
+
+    const options = generateOptions(correctAnswer, operation);
+
+    return {
+      id: `q_${selectedNumber}_${pairedNumber}_${Math.random()}`,
+      questionText: `What is ${expression}?`,
+      correctAnswer,
+      options,
+    };
+  };
+
+  // Function to generate questions for a set
+  const generateQuestionsForSet = (currentSet) => {
+    const generated = [];
+
+    currentSet.forEach((pairedNumber) => {
+      // Generate 3 questions per paired number
+      for (let i = 0; i < 3; i++) {
+        const question = generateQuestion(
+          selectedNumber,
+          pairedNumber,
+          selectedOperation
+        );
+        generated.push(question);
+      }
+    });
+
+    setQuestions(generated);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setTimeLeft(TIME_LIMIT);
+    setAttempts(0);
+    setFailedOptions([]);
+  };
+
   // Function to start the quiz
   const startQuiz = () => {
     if (selectedNumber && selectedOperation) {
       playStartQuiz(); // Play start quiz sound
 
-      generateQuestions(selectedNumber, selectedOperation);
-      setCurrentStep('quiz'); // Move to quiz step
+      const sets = generateNumberSets(selectedNumber);
+      setNumberSets(sets);
+      setCurrentSetIndex(0);
+      setCurrentSetPassed(false);
+      generateQuestionsForSet(sets[0]); // Generate questions for the first set
+      setCurrentStep("quiz"); // Move to quiz step
 
       // Mark this combination as used
-      const updatedUsed = [...usedCombinations, { number: selectedNumber, operation: selectedOperation }];
+      const updatedUsed = [
+        ...usedCombinations,
+        { number: selectedNumber, operation: selectedOperation },
+      ];
       setUsedCombinations(updatedUsed);
-      localStorage.setItem('usedCombinations', JSON.stringify(updatedUsed));
+      localStorage.setItem("usedCombinations", JSON.stringify(updatedUsed));
 
       // If all combinations are used, reset the tracking
       const totalCombinations = 9 * 3; // 9 numbers * 3 operations
       if (updatedUsed.length === totalCombinations) {
-        alert('You have used all possible number and operation combinations. Resetting used combinations.');
+        alert(
+          "You have used all possible number and operation combinations. Resetting used combinations."
+        );
         setUsedCombinations([]);
-        localStorage.removeItem('usedCombinations');
+        localStorage.removeItem("usedCombinations");
       }
     }
-  };
-
-  // Function to generate questions based on selected number and operation
-  const generateQuestions = (number, operation) => {
-    const generated = [];
-
-    for (let i = 0; i < 10; i++) { // Generate 10 questions
-      const randomNum = Math.floor(Math.random() * 9) + 1; // Random number between 1-9
-
-      let questionText = '';
-      let correctAnswer;
-      let expression = '';
-
-      switch (operation) {
-        case 'addition':
-          expression = `${number} + ${randomNum}`;
-          correctAnswer = number + randomNum;
-          break;
-        case 'subtraction':
-          // Ensure no negative results
-          if (number >= randomNum) {
-            expression = `${number} - ${randomNum}`;
-            correctAnswer = number - randomNum;
-          } else {
-            expression = `${randomNum} - ${number}`;
-            correctAnswer = randomNum - number;
-          }
-          break;
-        case 'multiplication':
-          expression = `${number} × ${randomNum}`;
-          correctAnswer = number * randomNum;
-          break;
-        default:
-          expression = `${number} + ${randomNum}`;
-          correctAnswer = number + randomNum;
-      }
-
-      questionText = `What is ${expression}?`;
-
-      const options = generateOptions(correctAnswer, operation);
-
-      generated.push({
-        id: `q_${i + 1}`,
-        questionText,
-        correctAnswer,
-        options,
-      });
-    }
-
-    setQuestions(generated);
-  };
-
-  // Effect to handle the timer for each question
-  useEffect(() => {
-    if (currentStep !== 'quiz' || gameOver || selectedAnswer !== null) return;
-
-    const countdown = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          handleTimeout();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    setTimer(countdown);
-    return () => clearInterval(countdown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestionIndex, selectedAnswer, gameOver, currentStep]);
-
-  // Function to update performance tracker
-  const updatePerformance = (number, operation, passedOnFirstAttempt) => {
-    const key = `${number}_${operation}`;
-    setPerformanceTracker((prev) => {
-      const updated = { ...prev, [key]: passedOnFirstAttempt };
-      localStorage.setItem('performanceTracker', JSON.stringify(updated));
-      return updated;
-    });
   };
 
   // Function to handle timeout when user doesn't answer in time
@@ -259,6 +280,36 @@ const MathFactFamilyQuiz = () => {
       playIncorrect();
     }
   };
+
+  // Function to update performance tracker
+  const updatePerformance = (number, operation, passedOnFirstAttempt) => {
+    const key = `${number}_${operation}`;
+    setPerformanceTracker((prev) => {
+      const updated = { ...prev, [key]: passedOnFirstAttempt };
+      localStorage.setItem("performanceTracker", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Effect to handle the timer for each question
+  useEffect(() => {
+    if (currentStep !== 'quiz' || gameOver || selectedAnswer !== null) return;
+
+    const countdown = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdown);
+          handleTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTimer(countdown);
+    return () => clearInterval(countdown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionIndex, selectedAnswer, gameOver, currentStep]);
 
   // Function to handle answer selection
   const handleAnswerClick = (index) => {
@@ -312,11 +363,12 @@ const MathFactFamilyQuiz = () => {
     }
   };
 
-  // Function to move to the next question or end the quiz
+  // Function to move to the next question or end the set
   const handleNextQuestion = () => {
     if (currentQuestionIndex === questions.length - 1) {
-      setGameOver(true);
-      setCurrentStep('gameOver'); // Move to game over step
+      // Current set completed
+      setCurrentSetPassed(true);
+      setCurrentStep("setComplete"); // New step to handle set completion
       playCompletion(); // Play completion sound
     } else {
       setCurrentQuestionIndex((prev) => prev + 1);
@@ -326,25 +378,6 @@ const MathFactFamilyQuiz = () => {
       setAttempts(0); // Reset attempts for the new question
       setFailedOptions([]); // Reset failed options for the new question
     }
-  };
-
-  // Function to calculate star ratings based on performance
-  const calculateStars = () => {
-    const totalOperations = 9 * 3; // 9 numbers * 3 operations
-    const passedOperations = Object.values(performanceTracker).filter((passed) => passed).length;
-    const percentage = (passedOperations / totalOperations) * 100;
-
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
-  // Function to render star icons
-  const renderStars = (count) => {
-    return [...Array(3)].map((_, i) => (
-      <Star key={i} style={{ color: i < count ? '#FFD700' : '#D3D3D3' }} size={32} />
-    ));
   };
 
   // Function to provide detailed explanations after three failed attempts
@@ -392,6 +425,57 @@ const MathFactFamilyQuiz = () => {
     localStorage.removeItem('performanceTracker'); // Clear from localStorage
   };
 
+  // Function to proceed to the next set or end the quiz
+  const proceedToNextSet = () => {
+    const nextSetIndex = currentSetIndex + 1;
+    if (nextSetIndex < numberSets.length) {
+      setCurrentSetIndex(nextSetIndex);
+      setCurrentSetPassed(false);
+      generateQuestionsForSet(numberSets[nextSetIndex]);
+      setCurrentStep("quiz");
+    } else {
+      // All sets completed
+      setGameOver(true);
+      setCurrentStep("gameOver");
+      playCompletion(); // Play completion sound
+    }
+  };
+
+  // Function to get lesson content based on selected number and operation
+  const getLessonContent = (number, operation) => {
+    switch (operation) {
+      case 'addition':
+        return (
+          <span>
+            Addition is like putting together objects. For example, if you have{' '}
+            <strong>{number}</strong> 🍎 and you get <strong>2</strong> more 🍎,
+            you now have <strong>{number + 2}</strong> 🍎!
+          </span>
+        );
+      case 'subtraction':
+        return (
+          <span>
+            Subtraction is like taking away objects. For example, if you have{' '}
+            <strong>{number + 2}</strong> 🍎 and you eat <strong>2</strong>, you
+            now have <strong>{number}</strong> 🍎 left!
+          </span>
+        );
+      case 'multiplication':
+        return (
+          <span>
+            Multiplication is like adding the same number multiple times. For
+            example, <strong>{number} × 3</strong> is the same as having{' '}
+            <strong>
+              {number} + {number} + {number} = {number * 3}
+            </strong>{' '}
+            🍎!
+          </span>
+        );
+      default:
+        return 'Let\'s get started!';
+    }
+  };
+
   // JSX for Number Selector
   const renderNumberSelector = () => {
     const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -433,7 +517,7 @@ const MathFactFamilyQuiz = () => {
               marginTop: '0.5rem',
             }}
           >
-            When we know one fact, we can use it to solve other facts too! It's like finding clues to a puzzle.
+            When we know one fact, we can use it to solve other facts too! It&apos;s like finding clues to a puzzle.
           </Typography>
         </Box>
 
@@ -595,7 +679,7 @@ const MathFactFamilyQuiz = () => {
                     marginBottom: '1rem',
                   }}
                 >
-                  Let's Learn!
+                  Let&apos;s Learn!
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   <strong>
@@ -627,43 +711,7 @@ const MathFactFamilyQuiz = () => {
           </CardContent>
         </Card>
       </Box>
-    );
-  };
-
-    // Function to get lesson content based on selected number and operation
-    const getLessonContent = (number, operation) => {
-      switch (operation) {
-        case 'addition':
-          return (
-            <span>
-              Addition is like putting together objects. For example, if you have{' '}
-              <strong>{number}</strong> 🍎 and you get <strong>2</strong> more 🍎,
-              you now have <strong>{number + 2}</strong> 🍎!
-            </span>
-          );
-        case 'subtraction':
-          return (
-            <span>
-              Subtraction is like taking away objects. For example, if you have{' '}
-              <strong>{number + 2}</strong> 🍎 and you eat <strong>2</strong>, you
-              now have <strong>{number}</strong> 🍎 left!
-            </span>
-          );
-        case 'multiplication':
-          return (
-            <span>
-              Multiplication is like adding the same number multiple times. For
-              example, <strong>{number} × 3</strong> is the same as having{' '}
-              <strong>
-                {number} + {number} + {number} = {number * 3}
-              </strong>{' '}
-              🍎!
-            </span>
-          );
-        default:
-          return 'Let\'s get started!';
-      }
-    };
+    )};
 
     // JSX for Quiz Interface
     const renderQuiz = () => {
@@ -675,17 +723,63 @@ const MathFactFamilyQuiz = () => {
         );
       }
 
-      if (currentStep === 'gameOver') {
+      // Handle set completion notification
+      if (currentStep === "setComplete") {
+        return (
+          <Card
+            sx={{
+              maxWidth: 900,
+              height: "auto",
+              margin: "auto",
+              p: 4,
+              textAlign: "center",
+            }}
+          >
+            {/* Success Mascot Animation */}
+            <Box
+              sx={{
+                width: 150,
+                height: 150,
+                margin: "auto",
+              }}
+            >
+              <Lottie
+                animationData={successMascotAnimation}
+                loop={false}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </Box>
+            <Typography variant="h5" gutterBottom>
+              Well Done!
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              You&apos;ve mastered this set of numbers!
+            </Typography>
+            <Box mt={3}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={proceedToNextSet}
+              >
+                Proceed to Next Set
+              </Button>
+            </Box>
+          </Card>
+        );
+      }
+
+      // Handle game over
+      if (currentStep === "gameOver") {
         const stars = calculateStars();
         return (
           <Card
             sx={{
               maxWidth: 900,
-              height: 'auto',
-              margin: 'auto',
-              position: 'relative',
-              justifyContent: 'center',
-              alignContent: 'center',
+              height: "auto",
+              margin: "auto",
+              position: "relative",
+              justifyContent: "center",
+              alignContent: "center",
             }}
           >
             {/* Confetti Animation */}
@@ -700,18 +794,18 @@ const MathFactFamilyQuiz = () => {
               {/* Success Mascot Animation */}
               <Box
                 sx={{
-                  position: 'relative',
+                  position: "relative",
                   width: 100,
                   height: 100,
                   top: -75,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
+                  left: "50%",
+                  transform: "translateX(-50%)",
                 }}
               >
                 <Lottie
                   animationData={successMascotAnimation}
                   loop={false}
-                  style={{ width: '100%', height: '100%' }}
+                  style={{ width: "100%", height: "100%" }}
                 />
               </Box>
               <Typography
@@ -928,7 +1022,7 @@ const MathFactFamilyQuiz = () => {
                     ) : attempts < 2 ? (
                       <>Wrong answer, try again.</>
                     ) : (
-                      <>That's not correct. The correct answer is {currentQuestion.correctAnswer}.</>
+                      <>That&apos;s not correct. The correct answer is {currentQuestion.correctAnswer}.</>
                     )}
                   </Typography>
                   {/* Provide Detailed Explanation after three failed attempts */}
@@ -991,13 +1085,208 @@ const MathFactFamilyQuiz = () => {
       );
     };
 
+    // Function to calculate stars based on performance
+    const calculateStars = () => {
+      const totalSets = numberSets.length;
+      const passedSets = numberSets.reduce((acc, set, index) => {
+        const key = `${selectedNumber}_${selectedOperation}`;
+        return performanceTracker[key] ? acc + 1 : acc;
+      }, 0);
+      const percentage = (passedSets / totalSets) * 100;
+
+      if (percentage >= 90) return 3;
+      if (percentage >= 70) return 2;
+      if (percentage >= 50) return 1;
+      return 0;
+    };
+
+    // Function to render star icons
+    const renderStars = (count) => {
+      return [...Array(3)].map((_, i) => (
+        <Star key={i} style={{ color: i < count ? '#FFD700' : '#D3D3D3' }} size={32} />
+      ));
+    };
+
+    // JSX for Final Completion
+    const renderGameOver = () => {
+      const stars = calculateStars();
+      return (
+        <Card
+          sx={{
+            maxWidth: 900,
+            height: "auto",
+            margin: "auto",
+            position: "relative",
+            justifyContent: "center",
+            alignContent: "center",
+          }}
+        >
+          {/* Confetti Animation */}
+          <Confetti
+            width={width}
+            height={height}
+            recycle={false}
+            numberOfPieces={300}
+          />
+
+          <CardContent sx={{ mt: 8 }}>
+            {/* Success Mascot Animation */}
+            <Box
+              sx={{
+                position: "relative",
+                width: 100,
+                height: 100,
+                top: -75,
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            >
+              <Lottie
+                animationData={successMascotAnimation}
+                loop={false}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </Box>
+            <Typography
+              variant="h5"
+              component="div"
+              gutterBottom
+              align="center"
+            >
+              Quiz Complete!
+            </Typography>
+            <Box display="flex" justifyContent="center" mb={2}>
+              {renderStars(stars)}
+            </Box>
+            <Typography variant="h6" align="center" gutterBottom>
+              You got {score.correct} out of {score.total} correct!
+            </Typography>
+            {stars === 3 ? (
+              <Typography variant="body1" align="center" color="green">
+                Excellent work! You&apos;re a math facts master! 🌟
+              </Typography>
+            ) : stars === 2 ? (
+              <Typography variant="body1" align="center" color="blue">
+                Good job! Keep practicing to improve! 👍
+              </Typography>
+            ) : stars === 1 ? (
+              <Typography variant="body1" align="center" color="orange">
+                Nice try! More practice will help you improve. 😊
+              </Typography>
+            ) : (
+              <Typography variant="body1" align="center" color="red">
+                Keep practicing! You&apos;ll get better with time. 💪
+              </Typography>
+            )}
+
+            {/* Performance Summary */}
+            <Box mt={4}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                align="center"
+              >
+                Performance Summary
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.keys(performanceTracker).map((key) => {
+                  const [number, operation] = key.split('_');
+                  const passed = performanceTracker[key];
+                  return (
+                    <Grid item xs={6} sm={4} key={key}>
+                      <Box
+                        sx={{
+                          border: '1px solid',
+                          borderColor: passed ? 'green' : 'red',
+                          borderRadius: '8px',
+                          padding: '8px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography variant="body1">
+                          {number} {operation.charAt(0).toUpperCase() + operation.slice(1)}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color={passed ? 'green' : 'red'}
+                        >
+                          {passed ? 'Passed' : 'Failed'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+
+            <Box textAlign="center" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleRestart}
+              >
+                Try Again
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      );
+    };
+
+    // JSX to render different steps
     return (
       <Box sx={{ py: 10, px: 4, md: { py: 14, px: 5 }, width: '100%' }}>
         {currentStep === 'selectNumber' ||
         currentStep === 'selectOperation' ||
         currentStep === 'lesson'
           ? renderNumberSelector()
-          : renderQuiz()}
+          : currentStep === 'quiz'
+          ? renderQuiz()
+          : currentStep === 'setComplete'
+          ? (
+            <Card
+              sx={{
+                maxWidth: 900,
+                height: "auto",
+                margin: "auto",
+                p: 4,
+                textAlign: "center",
+              }}
+            >
+              {/* Success Mascot Animation */}
+              <Box
+                sx={{
+                  width: 150,
+                  height: 150,
+                  margin: "auto",
+                }}
+              >
+                <Lottie
+                  animationData={successMascotAnimation}
+                  loop={false}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </Box>
+              <Typography variant="h5" gutterBottom>
+                Well Done!
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                You&apos;ve mastered this set of numbers!
+              </Typography>
+              <Box mt={3}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={proceedToNextSet}
+                >
+                  Proceed to Next Set
+                </Button>
+              </Box>
+            </Card>
+          )
+          : currentStep === 'gameOver'
+          ? renderGameOver()
+          : null}
       </Box>
     );
   };

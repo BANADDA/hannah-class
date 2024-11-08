@@ -166,7 +166,7 @@ const MathFactFamilyQuiz = () => {
   const generateQuestion = (selectedNumber, pairedNumber, operation) => {
     let expression = "";
     let correctAnswer;
-
+  
     switch (operation) {
       case "addition":
         expression = `${selectedNumber} + ${pairedNumber}`;
@@ -189,16 +189,17 @@ const MathFactFamilyQuiz = () => {
         expression = `${selectedNumber} + ${pairedNumber}`;
         correctAnswer = selectedNumber + pairedNumber;
     }
-
+  
     const options = generateOptions(correctAnswer, operation);
-
+  
     return {
       id: `q_${selectedNumber}_${pairedNumber}_${Math.random()}`,
       questionText: `What is ${expression}?`,
       correctAnswer,
       options,
+      pairedNumber, // Add paired number here
     };
-  };
+  };  
 
   // **Modified Function to Generate Questions with Repetitions**
   const generateQuestionsForSet = (currentSet) => {
@@ -328,56 +329,57 @@ const MathFactFamilyQuiz = () => {
   }, [currentQuestionIndex, selectedAnswer, gameOver, currentStep, showFact]);
 
   // Function to handle answer selection
-  const handleAnswerClick = (index) => {
-    if (!currentQuestion) {
-      console.error("Current question is undefined.");
-      return;
-    }
+  // Function to handle answer selection
+const handleAnswerClick = (index) => {
+  if (!currentQuestion) {
+    console.error("Current question is undefined.");
+    return;
+  }
 
-    clearInterval(timer);
-    const answer = currentQuestion.options[index];
-    const isAnswerCorrect = answer === currentQuestion.correctAnswer;
+  clearInterval(timer);
+  const answer = currentQuestion.options[index];
+  const isAnswerCorrect = answer === currentQuestion.correctAnswer;
 
-    if (isAnswerCorrect) {
-      setSelectedAnswer(index);
-      setIsCorrect(true);
-      setScore((prev) => ({
-        correct: prev.correct + 1,
-        total: prev.total + 1,
-      }));
-      updatePerformance(selectedNumber, selectedOperation, attempts === 0);
-      playCorrect();
+  if (isAnswerCorrect) {
+    setSelectedAnswer(index);
+    setIsCorrect(true);
+    setScore((prev) => ({
+      correct: prev.correct + 1,
+      total: prev.total + 1,
+    }));
+    updatePerformance(selectedNumber, selectedOperation, attempts === 0);
+    playCorrect();
+  } else {
+    if (attempts + 1 < 3) { // Allow up to three attempts
+      // Allow another attempt
+      setAttempts((prev) => prev + 1);
+      setScore((prev) => ({ ...prev, total: prev.total + 1 }));
+      setFailedOptions((prev) => [...prev, index]); // Add failed option
+      playIncorrect();
+      setTimeLeft(TIME_LIMIT);
+      // Restart timer for the next attempt
+      const countdown = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdown);
+            handleTimeout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setTimer(countdown);
     } else {
-      if (attempts + 1 < 3) { // Allow up to three attempts
-        // Allow another attempt
-        setAttempts((prev) => prev + 1);
-        setScore((prev) => ({ ...prev, total: prev.total + 1 }));
-        setFailedOptions((prev) => [...prev, index]); // Add failed option
-        playIncorrect();
-        setTimeLeft(TIME_LIMIT);
-        // Restart timer for the next attempt
-        const countdown = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              clearInterval(countdown);
-              handleTimeout();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        setTimer(countdown);
-      } else {
-        // Third failed attempt - reveal correct answer
-        setSelectedAnswer(index);
-        setIsCorrect(false);
-        setScore((prev) => ({ ...prev, total: prev.total + 1 }));
-        setFailedOptions((prev) => [...prev, index]); // Add failed option
-        updatePerformance(selectedNumber, selectedOperation, false);
-        playIncorrect();
-      }
+      // Third failed attempt - reveal correct answer
+      setSelectedAnswer(index);
+      setIsCorrect(false);
+      setScore((prev) => ({ ...prev, total: prev.total + 1 }));
+      setFailedOptions((prev) => [...prev, index]); // Add failed option
+      updatePerformance(selectedNumber, selectedOperation, false);
+      playIncorrect();
     }
-  };
+  }
+};
 
   // Function to move to the next question or end the set
   const handleNextQuestion = () => {
@@ -410,15 +412,20 @@ const MathFactFamilyQuiz = () => {
   };
 
   // Function to provide detailed explanations after three failed attempts
-  const getDetailedExplanation = (number, operation) => {
-    const facts = {
-      addition: `${number} + 1 = ${number + 1}`,
-      subtraction: `${number} - 1 = ${number - 1}`,
-      multiplication: `${number} × 1 = ${number}`,
-    };
-
-    return facts[operation] || 'Let\'s get started!';
-  };
+  const getDetailedExplanation = (number, operation, pairedNumber) => {
+    switch (operation) {
+      case 'addition':
+        return `${number} + ${pairedNumber} = ${number + pairedNumber}`;
+      case 'subtraction':
+        return number >= pairedNumber
+          ? `${number} - ${pairedNumber} = ${number - pairedNumber}`
+          : `${pairedNumber} - ${number} = ${pairedNumber - number}`;
+      case 'multiplication':
+        return `${number} × ${pairedNumber} = ${number * pairedNumber}`;
+      default:
+        return '';
+    }
+  };  
 
   // Function to restart the quiz
   const handleRestart = () => {
@@ -1019,17 +1026,15 @@ const MathFactFamilyQuiz = () => {
                       ) : attempts < 2 ? (
                         <>Wrong answer, try again.</>
                       ) : (
-                        <>That&apos;s not correct. The correct answer is {currentQuestion.correctAnswer}.</>
+                        <>
+                          That&apos;s not correct. The correct answer is{' '}
+                          <strong>{currentQuestion.correctAnswer}</strong>.
+                          <br />
+                          {getDetailedExplanation(selectedNumber, selectedOperation, currentQuestion.pairedNumber)}
+                        </>
                       )}
                     </Typography>
-                    {/* Provide Detailed Explanation after three failed attempts */}
-                    {!isCorrect && attempts >= 2 && (
-                      <Typography variant="body2" mt={1}>
-                        {getDetailedExplanation(selectedNumber, selectedOperation)}
-                      </Typography>
-                    )}
                   </Alert>
-
                   {/* Encourage to Try Again if Attempts are Left */}
                   {!isCorrect && attempts < 2 && (
                     <Box textAlign="left" mt={2}>

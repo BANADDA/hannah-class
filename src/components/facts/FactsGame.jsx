@@ -67,6 +67,9 @@ const MathFactFamilyQuiz = () => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
+  // New State to track repetitions
+  const [questionRepetition, setQuestionRepetition] = useState(0); // 0, 1, 2
+
   // State for managing quiz progress and feedback
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isCorrect, setIsCorrect] = useState(null);
@@ -94,6 +97,9 @@ const MathFactFamilyQuiz = () => {
   const [numberSets, setNumberSets] = useState([]);
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [currentSetPassed, setCurrentSetPassed] = useState(false);
+
+  // State to control fact display
+  const [showFact, setShowFact] = useState(true); // New state variable
 
   // Define currentQuestion at the component level
   const currentQuestion = questions[currentQuestionIndex];
@@ -194,19 +200,27 @@ const MathFactFamilyQuiz = () => {
     };
   };
 
-  // Function to generate questions for a set
+  // **Modified Function to Generate Questions with Repetitions**
   const generateQuestionsForSet = (currentSet) => {
     const generated = [];
 
     currentSet.forEach((pairedNumber) => {
-      // Generate 3 questions per paired number
+      // Generate one question per paired number
+      const question = generateQuestion(
+        selectedNumber,
+        pairedNumber,
+        selectedOperation
+      );
+
+      // Repeat the same question three times with shuffled options
       for (let i = 0; i < 3; i++) {
-        const question = generateQuestion(
-          selectedNumber,
-          pairedNumber,
-          selectedOperation
-        );
-        generated.push(question);
+        // Create a deep copy to shuffle options differently
+        const repeatedQuestion = {
+          ...question,
+          id: `${question.id}_rep_${i + 1}`, // Unique ID for each repetition
+          options: generateOptions(question.correctAnswer, selectedOperation),
+        };
+        generated.push(repeatedQuestion);
       }
     });
 
@@ -217,6 +231,8 @@ const MathFactFamilyQuiz = () => {
     setTimeLeft(TIME_LIMIT);
     setAttempts(0);
     setFailedOptions([]);
+    setShowFact(true); // Show fact for the first question
+    setQuestionRepetition(0); // Reset repetition counter
   };
 
   // Function to start the quiz
@@ -293,7 +309,7 @@ const MathFactFamilyQuiz = () => {
 
   // Effect to handle the timer for each question
   useEffect(() => {
-    if (currentStep !== 'quiz' || gameOver || selectedAnswer !== null) return;
+    if (currentStep !== 'quiz' || gameOver || selectedAnswer !== null || showFact) return;
 
     const countdown = setInterval(() => {
       setTimeLeft((prev) => {
@@ -309,7 +325,7 @@ const MathFactFamilyQuiz = () => {
     setTimer(countdown);
     return () => clearInterval(countdown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestionIndex, selectedAnswer, gameOver, currentStep]);
+  }, [currentQuestionIndex, selectedAnswer, gameOver, currentStep, showFact]);
 
   // Function to handle answer selection
   const handleAnswerClick = (index) => {
@@ -365,45 +381,43 @@ const MathFactFamilyQuiz = () => {
 
   // Function to move to the next question or end the set
   const handleNextQuestion = () => {
-    if (currentQuestionIndex === questions.length - 1) {
-      // Current set completed
-      setCurrentSetPassed(true);
-      setCurrentStep("setComplete"); // New step to handle set completion
-      playCompletion(); // Play completion sound
-    } else {
-      setCurrentQuestionIndex((prev) => prev + 1);
+    if (questionRepetition < 2) { // Allow three repetitions (0,1,2)
+      setQuestionRepetition((prev) => prev + 1);
       setSelectedAnswer(null);
       setIsCorrect(null);
       setTimeLeft(TIME_LIMIT);
-      setAttempts(0); // Reset attempts for the new question
-      setFailedOptions([]); // Reset failed options for the new question
+      setAttempts(0); // Reset attempts for the new repetition
+      setFailedOptions([]); // Reset failed options for the new repetition
+      setShowFact(false); // Do not show fact again
+    } else {
+      if (currentQuestionIndex === questions.length - 1) {
+        // Current set completed
+        setCurrentSetPassed(true);
+        setCurrentStep("setComplete"); // New step to handle set completion
+        playCompletion(); // Play completion sound
+      } else {
+        // Move to next question
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setSelectedAnswer(null);
+        setIsCorrect(null);
+        setTimeLeft(TIME_LIMIT);
+        setAttempts(0); // Reset attempts for the new question
+        setFailedOptions([]); // Reset failed options for the new question
+        setShowFact(true); // Show fact for the next question
+        setQuestionRepetition(0); // Reset repetition counter
+      }
     }
   };
 
   // Function to provide detailed explanations after three failed attempts
   const getDetailedExplanation = (number, operation) => {
-    const explanations = {
-      addition: [
-        `1 + 1 = 2`,
-        `2 + 2 = 4`,
-        `3 + 3 = 6`,
-      ],
-      subtraction: [
-        `2 - 1 = 1`,
-        `4 - 2 = 2`,
-        `6 - 3 = 3`,
-      ],
-      multiplication: [
-        `2 × 2 = 4`,
-        `3 × 3 = 9`,
-        `4 × 4 = 16`,
-      ],
+    const facts = {
+      addition: `${number} + 1 = ${number + 1}`,
+      subtraction: `${number} - 1 = ${number - 1}`,
+      multiplication: `${number} × 1 = ${number}`,
     };
 
-    // Select a random explanation from the available ones for the operation
-    const operationExplanations = explanations[operation];
-    const randomIndex = Math.floor(Math.random() * operationExplanations.length);
-    return operationExplanations[randomIndex];
+    return facts[operation] || 'Let\'s get started!';
   };
 
   // Function to restart the quiz
@@ -441,15 +455,18 @@ const MathFactFamilyQuiz = () => {
     }
   };
 
-  // Function to get lesson content based on selected number and operation
-  const getFact = (number, operation) => {
-    const facts = {
-      addition: `${number} + 1 = ${number + 1}`,
-      subtraction: `${number} - 1 = ${number - 1}`,
-      multiplication: `${number} × 1 = ${number}`,
-    };
-
-    return facts[operation] || 'Let\'s get started!';
+  // Function to get fact based on selected number and operation
+  const getFact = (number, operation, pairedNumber) => {
+    switch (operation) {
+      case 'addition':
+        return `${number} + ${pairedNumber} = ${number + pairedNumber}`;
+      case 'subtraction':
+        return `${number} - ${pairedNumber} = ${number - pairedNumber}`;
+      case 'multiplication':
+        return `${number} × ${pairedNumber} = ${number * pairedNumber}`;
+      default:
+        return '';
+    }
   };
 
   // JSX for Number Selector
@@ -581,7 +598,6 @@ const MathFactFamilyQuiz = () => {
               ))}
             </Grid>
 
-            {/* Operation Selection */}
             {currentStep === 'selectOperation' && (
               <>
                 <Typography
@@ -604,13 +620,14 @@ const MathFactFamilyQuiz = () => {
                       <Button
                         variant={selectedOperation === op ? 'contained' : 'outlined'}
                         color="secondary"
-                        onClick={() => op === 'addition' && handleOperationClick(op)}
+                        onClick={() => handleOperationClick(op)}
                         onMouseEnter={() => {
-                          if (selectedOperation !== op && op === 'addition') {
+                          if (selectedOperation !== op) {
                             playHover();
                           }
                         }}
-                        disabled={op !== 'addition'}
+                        // Remove or adjust this line to unlock all operations
+                        disabled={false} // Allow all operations to be selected
                         sx={{
                           width: { xs: '100%', sm: '200px' },
                           height: 50,
@@ -620,23 +637,21 @@ const MathFactFamilyQuiz = () => {
                           backgroundColor:
                             selectedOperation === op ? '#FFB74D' : 'white',
                           color:
-                            op === 'addition' ? (selectedOperation === op ? '#fff' : '#71480AFF') : '#9E9E9E',
-                          borderColor: op === 'addition' ? '#FFB74D' : '#E0E0E0',
+                            selectedOperation === op ? '#fff' : '#71480AFF',
+                          borderColor: '#FFB74D',
                           boxSizing: 'border-box',
                           transition:
                             'background-color 0.3s ease-in-out, color 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
                           '&:hover': {
                             backgroundColor:
-                              op === 'addition' ? (selectedOperation === op ? '#FFA726' : '#FFF3E0') : 'white',
-                            color:
-                              op === 'addition' ? (selectedOperation === op ? '#fff' : '#815007FF') : '#9E9E9E',
-                            transform: op === 'addition' ? 'scale(1.05)' : 'none',
-                            boxShadow: op === 'addition' ? '0px 4px 10px rgba(0, 0, 0, 0.2)' : 'none',
+                              selectedOperation === op ? '#FFA726' : '#FFF3E0',
+                            color: selectedOperation === op ? '#fff' : '#815007FF',
+                            transform: 'scale(1.05)',
+                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
                           },
                         }}
                       >
                         {op.charAt(0).toUpperCase() + op.slice(1)}
-                        {op !== 'addition' && ' 🔒'}
                       </Button>
                     </Grid>
                   ))}
@@ -647,21 +662,6 @@ const MathFactFamilyQuiz = () => {
             {/* Lesson Step */}
             {currentStep === 'lesson' && (
               <Box>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 'bold',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  Learn a Math Fact!
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  <strong>
-                    {getFact(selectedNumber, selectedOperation)}
-                  </strong>
-                </Typography>
                 <Box mt={3}>
                   <Button
                     variant="contained"
@@ -671,7 +671,7 @@ const MathFactFamilyQuiz = () => {
                       startQuiz();
                     }}
                   >
-                    Start Quiz
+                    Start Adventure
                   </Button>
                 </Box>
               </Box>
@@ -679,404 +679,66 @@ const MathFactFamilyQuiz = () => {
           </CardContent>
         </Card>
       </Box>
-    )};
+    )
+  };
 
-    // JSX for Quiz Interface
-    const renderQuiz = () => {
-      if (questions.length === 0) {
-        return (
-          <Typography variant="h6" align="left">
-            Loading questions...
-          </Typography>
-        );
-      }
-
-      // Handle set completion notification
-      if (currentStep === "setComplete") {
-        return (
-          <Card
-            sx={{
-              maxWidth: 900,
-              height: "auto",
-              margin: "auto",
-              p: 4,
-              textAlign: "center",
-            }}
-          >
-            {/* Success Mascot Animation */}
-            <Box
-              sx={{
-                width: 150,
-                height: 150,
-                margin: "auto",
-              }}
-            >
-              <Lottie
-                animationData={successMascotAnimation}
-                loop={false}
-                style={{ width: "100%", height: "100%" }}
-              />
-            </Box>
-            <Typography variant="h5" gutterBottom>
-              Well Done!
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-              You&apos;ve mastered this set of numbers!
-            </Typography>
-            <Box mt={3}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={proceedToNextSet}
-              >
-                Proceed to Next Set
-              </Button>
-            </Box>
-          </Card>
-        );
-      }
-
-      // Handle game over
-      if (currentStep === "gameOver") {
-        const stars = calculateStars();
-        return (
-          <Card
-            sx={{
-              maxWidth: 900,
-              height: "auto",
-              margin: "auto",
-              position: "relative",
-              justifyContent: "center",
-              alignContent: "center",
-            }}
-          >
-            {/* Confetti Animation */}
-            <Confetti
-              width={width}
-              height={height}
-              recycle={false}
-              numberOfPieces={300}
-            />
-
-            <CardContent sx={{ mt: 8 }}>
-              {/* Success Mascot Animation */}
-              <Box
-                sx={{
-                  position: "relative",
-                  width: 100,
-                  height: 100,
-                  top: -75,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                }}
-              >
-                <Lottie
-                  animationData={successMascotAnimation}
-                  loop={false}
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </Box>
-              <Typography
-                variant="h5"
-                component="div"
-                gutterBottom
-                align="center"
-              >
-                Quiz Complete!
-              </Typography>
-              <Box display="flex" justifyContent="center" mb={2}>
-                {renderStars(stars)}
-              </Box>
-              <Typography variant="h6" align="center" gutterBottom>
-                You got {score.correct} out of {score.total} correct!
-              </Typography>
-              {stars === 3 ? (
-                <Typography variant="body1" align="center" color="green">
-                  Excellent work! You&apos;re a math facts master! 🌟
-                </Typography>
-              ) : stars === 2 ? (
-                <Typography variant="body1" align="center" color="blue">
-                  Good job! Keep practicing to improve! 👍
-                </Typography>
-              ) : stars === 1 ? (
-                <Typography variant="body1" align="center" color="orange">
-                  Nice try! More practice will help you improve. 😊
-                </Typography>
-              ) : (
-                <Typography variant="body1" align="center" color="red">
-                  Keep practicing! You&apos;ll get better with time. 💪
-                </Typography>
-              )}
-
-              {/* Performance Summary */}
-              <Box mt={4}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  align="center"
-                >
-                  Performance Summary
-                </Typography>
-                <Grid container spacing={2}>
-                  {Object.keys(performanceTracker).map((key) => {
-                    const [number, operation] = key.split('_');
-                    const passed = performanceTracker[key];
-                    return (
-                      <Grid item xs={6} sm={4} key={key}>
-                        <Box
-                          sx={{
-                            border: '1px solid',
-                            borderColor: passed ? 'green' : 'red',
-                            borderRadius: '8px',
-                            padding: '8px',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <Typography variant="body1">
-                            {number} {operation.charAt(0).toUpperCase() + operation.slice(1)}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color={passed ? 'green' : 'red'}
-                          >
-                            {passed ? 'Passed' : 'Failed'}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Box>
-
-              <Box textAlign="center" mt={2}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleRestart}
-                >
-                  Try Again
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        );
-      }
-
-      // Ensure currentQuestion is defined
-      if (!currentQuestion) {
-        return (
-          <Typography variant="h6" align="left">
-            No question available.
-          </Typography>
-        );
-      }
-
+  // JSX for Quiz Interface
+  const renderQuiz = () => {
+    if (questions.length === 0) {
       return (
-        <Card sx={{ maxWidth: 900, margin: 'auto' }}>
-          <CardContent>
-            {/* Timer and Score */}
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Typography variant="body1">
-                Time left: {timeLeft}s
-              </Typography>
-              <Typography variant="body1">
-                Score: {score.correct}/{score.total}
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={(timeLeft / TIME_LIMIT) * 100}
-              sx={{ mb: 2 }}
+        <Typography variant="h6" align="left">
+          Loading questions...
+        </Typography>
+      );
+    }
+
+    // Handle set completion notification
+    if (currentStep === "setComplete") {
+      return (
+        <Card
+          sx={{
+            maxWidth: 900,
+            height: "auto",
+            margin: "auto",
+            p: 4,
+            textAlign: "center",
+          }}
+        >
+          {/* Success Mascot Animation */}
+          <Box
+            sx={{
+              width: 150,
+              height: 150,
+              margin: "auto",
+            }}
+          >
+            <Lottie
+              animationData={successMascotAnimation}
+              loop={false}
+              style={{ width: "100%", height: "100%" }}
             />
-
-            {/* Question Text */}
-            <Typography variant="h6" gutterBottom>
-              {currentQuestion.questionText}
-            </Typography>
-
-            {/* Display Answer Buttons */}
-            <Grid container spacing={2}>
-              {currentQuestion.options.map((option, index) => (
-                <Grid item xs={12} sm={6} key={index}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => handleAnswerClick(index)}
-                    disabled={
-                      selectedAnswer !== null || failedOptions.includes(index)
-                    }
-                    sx={{
-                      backgroundColor:
-                        selectedAnswer === index
-                          ? isCorrect
-                            ? '#c8e6c9'
-                            : '#ffcdd2'
-                          : failedOptions.includes(index)
-                          ? '#f0f0f0'
-                          : 'inherit',
-                      borderColor:
-                        selectedAnswer === index
-                          ? isCorrect
-                            ? '#2e7d32'
-                            : '#c62828'
-                          : failedOptions.includes(index)
-                          ? '#bdbdbd'
-                          : 'inherit',
-                      color:
-                        selectedAnswer === index
-                          ? isCorrect
-                            ? '#2e7d32'
-                            : '#c62828'
-                          : failedOptions.includes(index)
-                          ? '#9e9e9e'
-                          : 'inherit',
-                      '&:hover': {
-                        backgroundColor:
-                          selectedAnswer === index
-                            ? isCorrect
-                              ? '#a5d6a7'
-                              : '#ef9a9a'
-                            : failedOptions.includes(index)
-                            ? '#f0f0f0'
-                            : '#f5f5f5',
-                      },
-                    }}
-                  >
-                    {option}
-                  </Button>
-                </Grid>
-              ))}
-            </Grid>
-
-            {/* Display Mascot and Feedback */}
-            {selectedAnswer !== null && (
-              <Box mt={2}>
-                {/* Conditional Mascot Rendering */}
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    mt: 1,
-                    mx: 'auto',
-                  }}
-                >
-                  {selectedAnswer === -1 || !isCorrect ? (
-                    <Lottie
-                      animationData={wrongMascotAnimation}
-                      loop={false}
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  ) : (
-                    <Lottie
-                      animationData={successMascotAnimation}
-                      loop={false}
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  )}
-                </Box>
-                <Alert severity={isCorrect ? 'success' : 'error'}>
-                  <AlertTitle>
-                    {isCorrect
-                      ? 'Correct! 🎉'
-                      : selectedAnswer === -1
-                      ? "Time's up! ⏰"
-                      : `Wrong answer! 😞 Attempt ${attempts + 1}`}
-                  </AlertTitle>
-                  <Typography variant="body2">
-                    {selectedAnswer === -1 ? (
-                      "You didn't select an answer in time."
-                    ) : isCorrect ? (
-                      <>Great job! You selected the correct answer.</>
-                    ) : attempts < 2 ? (
-                      <>Wrong answer, try again.</>
-                    ) : (
-                      <>That&apos;s not correct. The correct answer is {currentQuestion.correctAnswer}.</>
-                    )}
-                  </Typography>
-                  {/* Provide Detailed Explanation after three failed attempts */}
-                  {!isCorrect && attempts >= 2 && (
-                    <Typography variant="body2" mt={1}>
-                      {getDetailedExplanation(selectedNumber, selectedOperation)}
-                    </Typography>
-                  )}
-                </Alert>
-
-                {/* Encourage to Try Again if Attempts are Left */}
-                {!isCorrect && attempts < 2 && (
-                  <Box textAlign="left" mt={2}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => {
-                        setSelectedAnswer(null);
-                        setIsCorrect(null);
-                        setTimeLeft(TIME_LIMIT);
-                        // Keep failed options disabled
-                        playClick();
-                        // Restart timer for the next attempt
-                        const countdown = setInterval(() => {
-                          setTimeLeft((prev) => {
-                            if (prev <= 1) {
-                              clearInterval(countdown);
-                              handleTimeout();
-                              return 0;
-                            }
-                            return prev - 1;
-                          });
-                        }, 1000);
-                        setTimer(countdown);
-                      }}
-                    >
-                      Try Again
-                    </Button>
-                  </Box>
-                )}
-
-                {/* Show Next Question or See Results */}
-                {isCorrect || (isCorrect === false && attempts >= 2) ? (
-                  <Box textAlign="left" mt={2}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleNextQuestion}
-                    >
-                      {currentQuestionIndex === questions.length - 1
-                        ? 'See Results'
-                        : 'Next Question'}
-                    </Button>
-                  </Box>
-                ) : null}
-              </Box>
-            )}
-          </CardContent>
+          </Box>
+          <Typography variant="h5" gutterBottom>
+            Well Done!
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            You&apos;ve mastered this set of numbers!
+          </Typography>
+          <Box mt={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={proceedToNextSet}
+            >
+              Proceed to Next Set
+            </Button>
+          </Box>
         </Card>
       );
-    };
+    }
 
-    // Function to calculate stars based on performance
-    const calculateStars = () => {
-      const totalSets = numberSets.length;
-      const passedSets = numberSets.reduce((acc, set, index) => {
-        const key = `${selectedNumber}_${selectedOperation}`;
-        return performanceTracker[key] ? acc + 1 : acc;
-      }, 0);
-      const percentage = (passedSets / totalSets) * 100;
-
-      if (percentage >= 90) return 3;
-      if (percentage >= 70) return 2;
-      if (percentage >= 50) return 1;
-      return 0;
-    };
-
-    // Function to render star icons
-    const renderStars = (count) => {
-      return [...Array(3)].map((_, i) => (
-        <Star key={i} style={{ color: i < count ? '#FFD700' : '#D3D3D3' }} size={32} />
-      ));
-    };
-
-    // JSX for Final Completion
-    const renderGameOver = () => {
+    // Handle game over
+    if (currentStep === "gameOver") {
       const stars = calculateStars();
       return (
         <Card
@@ -1199,64 +861,442 @@ const MathFactFamilyQuiz = () => {
           </CardContent>
         </Card>
       );
-    };
+    }
 
-    // JSX to render different steps
+    // Ensure currentQuestion is defined
+    if (!currentQuestion) {
+      return (
+        <Typography variant="h6" align="left">
+          No question available.
+        </Typography>
+      );
+    }
+
     return (
-      <Box sx={{ py: 10, px: 4, md: { py: 14, px: 5 }, width: '100%' }}>
-        {currentStep === 'selectNumber' ||
-        currentStep === 'selectOperation' ||
-        currentStep === 'lesson'
-          ? renderNumberSelector()
-          : currentStep === 'quiz'
-          ? renderQuiz()
-          : currentStep === 'setComplete'
-          ? (
-            <Card
-              sx={{
-                maxWidth: 900,
-                height: "auto",
-                margin: "auto",
-                p: 4,
-                textAlign: "center",
-              }}
-            >
-              {/* Success Mascot Animation */}
-              <Box
-                sx={{
-                  width: 150,
-                  height: 150,
-                  margin: "auto",
-                }}
-              >
-                <Lottie
-                  animationData={successMascotAnimation}
-                  loop={false}
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </Box>
-              <Typography variant="h5" gutterBottom>
-                Well Done!
+      <Card sx={{ maxWidth: 900, margin: 'auto' }}>
+        <CardContent>
+          {/* Timer and Score */}
+          {!showFact && (
+            <Box display="flex" justifyContent="space-between" mb={2}>
+              <Typography variant="body1">
+                Time left: {timeLeft}s
               </Typography>
-              <Typography variant="body1" gutterBottom>
-                You&apos;ve mastered this set of numbers!
+              <Typography variant="body1">
+                Score: {score.correct}/{score.total}
               </Typography>
-              <Box mt={3}>
+            </Box>
+          )}
+          {!showFact && (
+            <LinearProgress
+              variant="determinate"
+              value={(timeLeft / TIME_LIMIT) * 100}
+              sx={{ mb: 2 }}
+            />
+          )}
+
+          {/* Fact Display */}
+          {showFact && questionRepetition === 0 && (
+            <Box textAlign="center">
+              <Typography textAlign="center" variant="h3" gutterBottom>
+                Learn Fact:
+              </Typography>
+              <Typography alignSelf="start" variant="h5" gutterBottom>
+                <strong>
+                  {getFact(selectedNumber, selectedOperation, getRandomPairedNumber())}
+                </strong>
+              </Typography>
+              <Box textAlign="center" mt={2}>
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={proceedToNextSet}
+                  onClick={() => setShowFact(false)}
                 >
-                  Proceed to Next Set
+                  Start Quiz
                 </Button>
               </Box>
-            </Card>
-          )
-          : currentStep === 'gameOver'
-          ? renderGameOver()
-          : null}
-      </Box>
+            </Box>
+          )}
+
+          {/* Display Answer Buttons */}
+          {!showFact && (
+            <>
+              <Typography variant="h6" gutterBottom>
+                {currentQuestion.questionText}
+              </Typography>
+
+              <Grid container spacing={2}>
+                {currentQuestion.options.map((option, index) => (
+                  <Grid item xs={12} sm={6} key={index}>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => handleAnswerClick(index)}
+                      disabled={
+                        selectedAnswer !== null || failedOptions.includes(index)
+                      }
+                      sx={{
+                        backgroundColor:
+                          selectedAnswer === index
+                            ? isCorrect
+                              ? '#c8e6c9'
+                              : '#ffcdd2'
+                            : failedOptions.includes(index)
+                              ? '#f0f0f0'
+                              : 'inherit',
+                        borderColor:
+                          selectedAnswer === index
+                            ? isCorrect
+                              ? '#2e7d32'
+                              : '#c62828'
+                            : failedOptions.includes(index)
+                              ? '#bdbdbd'
+                              : 'inherit',
+                        color:
+                          selectedAnswer === index
+                            ? isCorrect
+                              ? '#2e7d32'
+                              : '#c62828'
+                            : failedOptions.includes(index)
+                              ? '#9e9e9e'
+                              : 'inherit',
+                        '&:hover': {
+                          backgroundColor:
+                            selectedAnswer === index
+                              ? isCorrect
+                                ? '#a5d6a7'
+                                : '#ef9a9a'
+                              : failedOptions.includes(index)
+                                ? '#f0f0f0'
+                                : '#f5f5f5',
+                        },
+                      }}
+                    >
+                      {option}
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {/* Display Mascot and Feedback */}
+              {selectedAnswer !== null && (
+                <Box mt={2}>
+                  {/* Conditional Mascot Rendering */}
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      mt: 1,
+                      mx: 'auto',
+                    }}
+                  >
+                    {selectedAnswer === -1 || !isCorrect ? (
+                      <Lottie
+                        animationData={wrongMascotAnimation}
+                        loop={false}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    ) : (
+                      <Lottie
+                        animationData={successMascotAnimation}
+                        loop={false}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    )}
+                  </Box>
+                  <Alert severity={isCorrect ? 'success' : 'error'}>
+                    <AlertTitle>
+                      {isCorrect
+                        ? 'Correct! 🎉'
+                        : selectedAnswer === -1
+                          ? "Time's up! ⏰"
+                          : `Wrong answer! 😞 Attempt ${attempts + 1}`}
+                    </AlertTitle>
+                    <Typography variant="body2">
+                      {selectedAnswer === -1 ? (
+                        "You didn't select an answer in time."
+                      ) : isCorrect ? (
+                        <>Great job! You selected the correct answer.</>
+                      ) : attempts < 2 ? (
+                        <>Wrong answer, try again.</>
+                      ) : (
+                        <>That&apos;s not correct. The correct answer is {currentQuestion.correctAnswer}.</>
+                      )}
+                    </Typography>
+                    {/* Provide Detailed Explanation after three failed attempts */}
+                    {!isCorrect && attempts >= 2 && (
+                      <Typography variant="body2" mt={1}>
+                        {getDetailedExplanation(selectedNumber, selectedOperation)}
+                      </Typography>
+                    )}
+                  </Alert>
+
+                  {/* Encourage to Try Again if Attempts are Left */}
+                  {!isCorrect && attempts < 2 && (
+                    <Box textAlign="left" mt={2}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => {
+                          setSelectedAnswer(null);
+                          setIsCorrect(null);
+                          setTimeLeft(TIME_LIMIT);
+                          // Keep failed options disabled
+                          playClick();
+                          // Restart timer for the next attempt
+                          const countdown = setInterval(() => {
+                            setTimeLeft((prev) => {
+                              if (prev <= 1) {
+                                clearInterval(countdown);
+                                handleTimeout();
+                                return 0;
+                              }
+                              return prev - 1;
+                            });
+                          }, 1000);
+                          setTimer(countdown);
+                        }}
+                      >
+                        Try Again
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* Show Next Question or See Results */}
+                  {isCorrect || (isCorrect === false && attempts >= 2) ? (
+                    <Box textAlign="left" mt={2}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleNextQuestion}
+                      >
+                        {currentQuestionIndex === questions.length - 1 &&
+                          questionRepetition === 2
+                          ? 'See Results'
+                          : 'Next Question'}
+                      </Button>
+                    </Box>
+                  ) : null}
+                </Box>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     );
   };
 
-  export default MathFactFamilyQuiz;
+  // Function to calculate stars based on performance
+  const calculateStars = () => {
+    const totalSets = numberSets.length;
+    const passedSets = numberSets.reduce((acc, set, index) => {
+      const key = `${selectedNumber}_${selectedOperation}`;
+      return performanceTracker[key] ? acc + 1 : acc;
+    }, 0);
+    const percentage = (passedSets / totalSets) * 100;
+
+    if (percentage >= 90) return 3;
+    if (percentage >= 70) return 2;
+    if (percentage >= 50) return 1;
+    return 0;
+  };
+
+  // Function to render star icons
+  const renderStars = (count) => {
+    return [...Array(3)].map((_, i) => (
+      <Star key={i} style={{ color: i < count ? '#FFD700' : '#D3D3D3' }} size={32} />
+    ));
+  };
+
+  // JSX for Final Completion
+  const renderGameOver = () => {
+    const stars = calculateStars();
+    return (
+      <Card
+        sx={{
+          maxWidth: 900,
+          height: "auto",
+          margin: "auto",
+          position: "relative",
+          justifyContent: "center",
+          alignContent: "center",
+        }}
+      >
+        {/* Confetti Animation */}
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={300}
+        />
+
+        <CardContent sx={{ mt: 8 }}>
+          {/* Success Mascot Animation */}
+          <Box
+            sx={{
+              position: "relative",
+              width: 100,
+              height: 100,
+              top: -75,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <Lottie
+              animationData={successMascotAnimation}
+              loop={false}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </Box>
+          <Typography
+            variant="h5"
+            component="div"
+            gutterBottom
+            align="center"
+          >
+            Quiz Complete!
+          </Typography>
+          <Box display="flex" justifyContent="center" mb={2}>
+            {renderStars(stars)}
+          </Box>
+          <Typography variant="h6" align="center" gutterBottom>
+            You got {score.correct} out of {score.total} correct!
+          </Typography>
+          {stars === 3 ? (
+            <Typography variant="body1" align="center" color="green">
+              Excellent work! You&apos;re a math facts master! 🌟
+            </Typography>
+          ) : stars === 2 ? (
+            <Typography variant="body1" align="center" color="blue">
+              Good job! Keep practicing to improve! 👍
+            </Typography>
+          ) : stars === 1 ? (
+            <Typography variant="body1" align="center" color="orange">
+              Nice try! More practice will help you improve. 😊
+            </Typography>
+          ) : (
+            <Typography variant="body1" align="center" color="red">
+              Keep practicing! You&apos;ll get better with time. 💪
+            </Typography>
+          )}
+
+          {/* Performance Summary */}
+          <Box mt={4}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              align="center"
+            >
+              Performance Summary
+            </Typography>
+            <Grid container spacing={2}>
+              {Object.keys(performanceTracker).map((key) => {
+                const [number, operation] = key.split('_');
+                const passed = performanceTracker[key];
+                return (
+                  <Grid item xs={6} sm={4} key={key}>
+                    <Box
+                      sx={{
+                        border: '1px solid',
+                        borderColor: passed ? 'green' : 'red',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="body1">
+                        {number} {operation.charAt(0).toUpperCase() + operation.slice(1)}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color={passed ? 'green' : 'red'}
+                      >
+                        {passed ? 'Passed' : 'Failed'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+
+          <Box textAlign="center" mt={2}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleRestart}
+            >
+              Try Again
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Function to get a random paired number from the current set
+  const getRandomPairedNumber = () => {
+    if (numberSets.length === 0) return 1; // Default paired number
+    const currentSet = numberSets[currentSetIndex];
+    const randomIndex = Math.floor(Math.random() * currentSet.length);
+    return currentSet[randomIndex];
+  };
+
+  // JSX to render different steps
+  return (
+    <Box sx={{ py: 10, px: 4, md: { py: 14, px: 5 }, width: '100%' }}>
+      {currentStep === 'selectNumber' ||
+        currentStep === 'selectOperation' ||
+        currentStep === 'lesson'
+        ? renderNumberSelector()
+        : currentStep === 'quiz'
+          ? renderQuiz()
+          : currentStep === 'setComplete'
+            ? (
+              <Card
+                sx={{
+                  maxWidth: 900,
+                  height: "auto",
+                  margin: "auto",
+                  p: 4,
+                  textAlign: "center",
+                }}
+              >
+                {/* Success Mascot Animation */}
+                <Box
+                  sx={{
+                    width: 150,
+                    height: 150,
+                    margin: "auto",
+                  }}
+                >
+                  <Lottie
+                    animationData={successMascotAnimation}
+                    loop={false}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </Box>
+                <Typography variant="h5" gutterBottom>
+                  Well Done!
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  You&apos;ve mastered this set of numbers!
+                </Typography>
+                <Box mt={3}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={proceedToNextSet}
+                  >
+                    Proceed to Next Set
+                  </Button>
+                </Box>
+              </Card>
+            )
+            : currentStep === 'gameOver'
+              ? renderGameOver()
+              : null}
+    </Box>
+  );
+};
+
+export default MathFactFamilyQuiz;
